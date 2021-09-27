@@ -5,6 +5,7 @@ package main
 import (
    "os"
 	"context"
+   "time"
 	"io/ioutil"
 	"log"
 	"github.com/chromedp/chromedp"
@@ -12,6 +13,9 @@ import (
 )
 
 func main() {
+   date := "11/21/2021"
+   meal := "Lunch"
+   size := "3"
 	opts := []chromedp.ExecAllocatorOption{
 		chromedp.UserAgent( "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0"),
 		chromedp.WindowSize(1920, 1080),
@@ -44,18 +48,28 @@ func main() {
 
    log.Print("Type")
 	chromedp.Run(ctx, 
-//      chromedp.Click(`#diningAvailabilityForm-searchDate`, chromedp.ByID),
-//      chromedp.Clear(`#diningAvailabilityForm-searchDate`, chromedp.ByID),
-      chromedp.SetValue(`#diningAvailabilityForm-searchDate`, `11/22/2021`, chromedp.ByID),
-      chromedp.SendKeys(`#searchTime-wrapper > div.select-toggle.hoverable`, `Lunch\r`, chromedp.ByID),
-      chromedp.SendKeys(`#partySize-wrapper > div.select-toggle.hoverable`, `3\r`, chromedp.ByID),
+      chromedp.SetValue(`#diningAvailabilityForm-searchDate`, date, chromedp.ByID),
+      chromedp.SendKeys(`#searchTime-wrapper > div.select-toggle.hoverable`, meal+`\r`, chromedp.ByID),
+      chromedp.SendKeys(`#partySize-wrapper > div.select-toggle.hoverable`, size+`\r`, chromedp.ByID),
    )
 
-   log.Print("Click")
-	chromedp.Run(ctx, chromedp.Click(`#dineAvailSearchButton > span > span > span`, chromedp.ByID))
+   for {
+      toCTX, toCancel := context.WithTimeout(ctx, 1*time.Minute)
+      defer toCancel()
 
-   log.Print("Wait")
-	chromedp.Run(ctx, chromedp.WaitVisible(`#finderList > div > h3:nth-child(2)`, chromedp.ByID))
+      log.Print("Click")
+   	chromedp.Run(toCTX, chromedp.Click(`#dineAvailSearchButton > span > span > span`, chromedp.ByID))
+   
+      log.Print("Wait")
+	   err := chromedp.Run(toCTX, chromedp.WaitVisible(`#finderList > div > h3:nth-child(2)`, chromedp.ByID))
+      if err != nil {
+         log.Print("Timeout Fired")
+         chromedp.Run(ctx, chromedp.Reload())
+	      chromedp.Run(ctx, chromedp.WaitVisible(`#pageContainer > div.pepGlobalFooter`, chromedp.ByID))
+         continue
+      }
+      break
+   }
 
    log.Print("Write Soruce")
    chromedp.Run(ctx, 
