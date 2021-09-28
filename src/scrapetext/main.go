@@ -9,6 +9,10 @@ import (
 
 func main() {
 	scrape := "./out.html"
+	if len(os.Args) > 1 {
+		scrape = os.Args[1]
+	}
+
 	f, _ := os.Open(scrape)
 	defer f.Close()
 
