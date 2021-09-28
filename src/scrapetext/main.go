@@ -1,17 +1,29 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
+
+type DiningStruct struct {
+	Name  string
+	ID    int
+	URL   string
+	Avail []time.Time
+}
 
 func main() {
 	scrape := "./out.html"
 	if len(os.Args) > 1 {
 		scrape = os.Args[1]
 	}
+
+	dining := make(map[int]*DiningStruct)
 
 	f, _ := os.Open(scrape)
 	defer f.Close()
@@ -41,31 +53,58 @@ func main() {
 	sel := doc.Find("div.cardLink.finderCard.hasLink")
 
 	for i := range sel.Nodes {
+		var times []string
+
 		single := sel.Eq(i)
 		location := single.Find("h2.cardName").Contents().Text()
+
 		u := single.Find("a")
 		url, _ := u.Eq(-1).Attr("href")
 		id, _ := u.Eq(-1).Attr("id")
+
 		tId := strings.Split(id, ";")
-		id = tId[0]
+		idNum, _ := strconv.Atoi(tId[0])
 		if tId[1] != "entityType=restaurant" {
 			continue
 		}
-		var times []string
+
 		t := single.Find("span.buttonText")
 		if t.Length() == 0 {
 			continue
 		}
+
+		if _, ok := dining[idNum]; ok {
+			log.Fatalf("dup ID %d", idNum)
+		}
+		dining[idNum] = &DiningStruct{
+			Name: location,
+			ID:   idNum,
+			URL:  url,
+		}
 		t.Each(func(i int, s *goquery.Selection) {
 			times = append(times, s.Text())
 		})
-		if url == "" {
-			log.Printf("!!!! %s %q", location, times)
-		} else {
-			log.Printf("%s - %s %s %q", id, location, url, times)
+
+		for _, v := range times {
+			resTime, _ := time.Parse("01/02/2006 3:04 PM", searchDate+" "+v)
+			dining[idNum].Avail = append(dining[idNum].Avail, resTime)
 		}
-		//		for j := range times.Nodes {
-		//			log.Printf("%s %s", location, times.Eq(j).Contents().Text())
+
+		//		if url == "" {
+		//			log.Printf("!!!! %s %q", location, times)
+		//		} else {
+		//			log.Printf("%q", dining[idNum])
 		//		}
+
+		//		v, _ := json.Marshal(dining)
+		//		log.Print(v)
 	}
+
+	log.Printf("DB length %d", len(dining))
+	jStr, _ := json.MarshalIndent(dining, "", "\t")
+	log.Printf("%s", jStr)
+	//	for _, j := range dining {
+	//		jStr, _ := json.Marshal(j)
+	//		log.Printf("%q", jStr)
+	//	}
 }
