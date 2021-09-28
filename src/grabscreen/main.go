@@ -6,7 +6,7 @@ import (
    "os"
 	"context"
    "time"
-	"io/ioutil"
+//	"io/ioutil"
 	"log"
 	"github.com/chromedp/chromedp"
    "github.com/chromedp/cdproto/dom" 
@@ -16,6 +16,13 @@ func main() {
    date := "11/21/2021"
    meal := "Lunch"
    size := "3"
+
+   if len(os.Args) > 3  {
+      date = os.Args[1]
+      meal = os.Args[2]
+      size = os.Args[3]
+   }
+
 	opts := []chromedp.ExecAllocatorOption{
 		chromedp.UserAgent( "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0"),
 		chromedp.WindowSize(1920, 1080),
@@ -36,8 +43,6 @@ func main() {
 	)
 	defer cancel()
 
-	// capture screenshot of an element
-	var buf []byte
    var res string
 
    log.Print("Navigate")
@@ -91,9 +96,9 @@ func main() {
 //   log.Print("ScreenShot")
 //	chromedp.Run(ctx, chromedp.FullScreenshot(&buf, 90))
 
-	if err := ioutil.WriteFile("fullScreenshot.png", buf, 0o644); err != nil {
-		log.Fatal(err)
-	}
+//	if err := ioutil.WriteFile("fullScreenshot.png", buf, 0o644); err != nil {
+//		log.Fatal(err)
+//	}
 
 	log.Printf("wrote elementScreenshot.png and fullScreenshot.png")
 }

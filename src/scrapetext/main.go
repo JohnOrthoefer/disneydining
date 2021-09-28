@@ -18,12 +18,17 @@ type DiningStruct struct {
 }
 
 func main() {
+	dining := make(map[int]*DiningStruct)
+
+   jsonName := "./db.json"
+   jsonData, _ := os.ReadFile(jsonName)
+   json.Unmarshal(jsonData, &dining)
+
 	scrape := "./out.html"
 	if len(os.Args) > 1 {
 		scrape = os.Args[1]
 	}
 
-	dining := make(map[int]*DiningStruct)
 
 	f, _ := os.Open(scrape)
 	defer f.Close()
@@ -34,13 +39,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	searchDate, _ := doc.Find("#diningAvailabilityForm-searchDate").Attr("value")
-	searchTime := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
-	searchSize := doc.Find("#partySize-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
+// #ui-datepicker-div > table > tbody > tr:nth-child(4) > td.ui-datepicker-current-day
+//	searchDate := doc.Find("span.uiPlusDatePickerA11yDate").Contents().Eq(0).Text()
+//  log.Printf("%q", searchDate)
+//   searchDate = strings.Join((strings.Split(searchDate, ","))[0:3], ",")
+	//searchDate := doc.Find("#uiPlusDatePickerA11yDate").Contents().Text()
+//	searchTime := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
+//	searchSize := doc.Find("#partySize-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
 
-	log.Printf("Date: %q", searchDate)
-	log.Printf("Time: %s", searchTime)
-	log.Printf("Size: %s", searchSize)
+//	log.Printf("Date: %q", searchDate)
+//	log.Printf("Time: %s", searchTime)
+//	log.Printf("Size: %s", searchSize)
 
 	// find <li class="card dining show">
 	//  or maybe <div class="cardLink finderCard hasLink" role="link>
@@ -68,25 +77,28 @@ func main() {
 			continue
 		}
 
-		t := single.Find("span.buttonText")
+      t := single.Find("div.groupedOffers.show > span > span > a")
+		// t := single.Find("span.buttonText")
 		if t.Length() == 0 {
 			continue
 		}
 
-		if _, ok := dining[idNum]; ok {
-			log.Fatalf("dup ID %d", idNum)
-		}
-		dining[idNum] = &DiningStruct{
-			Name: location,
-			ID:   idNum,
-			URL:  url,
-		}
+		if _, ok := dining[idNum]; !ok {
+		   dining[idNum] = &DiningStruct{
+		   	Name: location,
+		   	ID:   idNum,
+		   	URL:  url,
+		   }
+      }
 		t.Each(func(i int, s *goquery.Selection) {
-			times = append(times, s.Text())
+         tempTime, _ := s.Attr("data-servicedatetime")
+         times = append(times, tempTime)
+//         log.Print(tempTime)
+//			times = append(times, s.Text())
 		})
 
 		for _, v := range times {
-			resTime, _ := time.Parse("01/02/2006 3:04 PM", searchDate+" "+v)
+			resTime, _ := time.Parse("2006-01-02T15:04:05-07:00", v)
 			dining[idNum].Avail = append(dining[idNum].Avail, resTime)
 		}
 
@@ -103,6 +115,11 @@ func main() {
 	log.Printf("DB length %d", len(dining))
 	jStr, _ := json.MarshalIndent(dining, "", "\t")
 	log.Printf("%s", jStr)
+
+   outFile, _ := os.Create(jsonName)
+   defer outFile.Close()
+   outFile.Write(jStr)
+
 	//	for _, j := range dining {
 	//		jStr, _ := json.Marshal(j)
 	//		log.Printf("%q", jStr)
