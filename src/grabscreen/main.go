@@ -64,8 +64,10 @@ func main() {
 	   err := chromedp.Run(toCTX, chromedp.WaitVisible(`#finderList > div > h3:nth-child(2)`, chromedp.ByID))
       if err != nil {
          log.Print("Timeout Fired")
-         chromedp.Run(ctx, chromedp.Reload())
-	      chromedp.Run(ctx, chromedp.WaitVisible(`#pageContainer > div.pepGlobalFooter`, chromedp.ByID))
+         chromedp.Run(ctx, 
+            chromedp.Reload(),
+	         chromedp.WaitVisible(`#pageContainer > div.pepGlobalFooter`, chromedp.ByID),
+         )
          continue
       }
       break
