@@ -41,14 +41,14 @@ func main() {
 
 // #ui-datepicker-div > table > tbody > tr:nth-child(4) > td.ui-datepicker-current-day
 //	searchDate := doc.Find("span.uiPlusDatePickerA11yDate").Contents().Eq(0).Text()
-//  log.Printf("%q", searchDate)
-//   searchDate = strings.Join((strings.Split(searchDate, ","))[0:3], ",")
-	//searchDate := doc.Find("#uiPlusDatePickerA11yDate").Contents().Text()
-//	searchTime := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
+// log.Printf("%q", searchDate)
+// searchDate = strings.Join((strings.Split(searchDate, ","))[0:3], ",")
+// searchDate := doc.Find("#uiPlusDatePickerA11yDate").Contents().Text()
+	searchTime := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
 //	searchSize := doc.Find("#partySize-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
 
 //	log.Printf("Date: %q", searchDate)
-//	log.Printf("Time: %s", searchTime)
+	log.Printf("Time: %s", searchTime)
 //	log.Printf("Size: %s", searchSize)
 
 	// find <li class="card dining show">
