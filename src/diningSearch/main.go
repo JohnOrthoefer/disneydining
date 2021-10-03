@@ -3,6 +3,7 @@
 package main
 
 import (
+   "os"
 	"log"
    "gopkg.in/ini.v1"
 )
@@ -13,10 +14,20 @@ func main() {
       log.Fatal("Failed to read config.ini file")
    }
 
-   dining, err := ini.Load("dining.ini")
-   if err != nil {
-      log.Fatal("Failed to read dining.ini file")
+   scheduleFile := "dining.ini"
+   if len(os.Args) > 1 {
+      scheduleFile = os.Args[1]
    }
+   dining, err := ini.Load(scheduleFile)
+   if err != nil {
+      log.Fatal("Failed to read %s file", scheduleFile)
+   }
+
+   if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
+      clearTimestamps()
+   }
+
+   log.Printf("Schedule: %s", scheduleFile)
 
    browser := cfg.Section("browser")
    disney := cfg.Section("disney")
