@@ -9,7 +9,7 @@ import (
    "net/smtp"
 )
 
-func MakeMsg(loc string, when []time.Time) string {
+func MakeMsg(loc, u string, when []time.Time) string {
    date := when[0].Format("Mon, Jan _2 2006")
    var times []string
 
@@ -17,7 +17,7 @@ func MakeMsg(loc string, when []time.Time) string {
       times = append(times, t.Format(time.Kitchen))
    }
 
-   return fmt.Sprintf("Found %s on %s @%s", loc, date, strings.Join(times, " "))
+   return fmt.Sprintf("Found %s on %s @%s.\n%s", loc, date, strings.Join(times, " "), u)
 }
 
 func Notify(msg string) {

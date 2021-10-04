@@ -35,7 +35,18 @@ func navigate(u string) {
 
 func wait(w string) {
    log.Printf("Waiting for %s", w)
-   chromedp.Run(CTX, chromedp.WaitVisible(w, chromedp.ByID))
+   for {
+      toCTX, toCancel := context.WithTimeout(CTX, 1*time.Minute)
+      defer toCancel()
+   
+      err := chromedp.Run(toCTX, chromedp.WaitVisible(w, chromedp.ByID))
+      if err != nil {
+         log.Printf("Timeout Fired, %s", err)
+         chromedp.Run(CTX, chromedp.Reload())
+         continue
+      }
+      break
+   }
 }
 
 func setSearch(date, meal, size string) {

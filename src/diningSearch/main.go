@@ -62,7 +62,7 @@ func main() {
       log.Printf("Looking for %q, list of %d", searchLocs, len(offers))
       for _, offer := range offers {
          if StringIn(searchLocs, offer.Name) {
-            s := MakeMsg(offer.Name, offer.Avail)
+            s := MakeMsg(offer.Name, offer.URL, offer.Avail)
             Notify(s)
             log.Printf("Found!!!  %s", s)
          }
