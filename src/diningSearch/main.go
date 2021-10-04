@@ -36,10 +36,12 @@ func main() {
 
    defSize := dining.Section("DEFAULT").Key("size").String()
    defLocs := dining.Section("DEFAULT").Key("restaurants").Strings(",")
+   defEnable := dining.Section("DEFAULT").Key("enabled").MustBool(true)
 
    for _, s := range dining.Sections() {
       searchName := s.Name()
       if searchName == "DEFAULT" { continue }
+      if !s.Key("enabled").MustBool(defEnable) { continue }
 
       searchDate := s.Key("date").String()
       searchTime := s.Key("time").String()
