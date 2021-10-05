@@ -9,10 +9,10 @@ import (
 )
 
 type DiningStruct struct {
-	Name  string
-	ID    int
-	URL   string
-	Avail []time.Time
+	Name  string      `json:"name"`
+	ID    int         `json:"id"`
+	URL   string      `json:"url"`
+	Avail []time.Time `json:"availible"`
 }
 
 type DiningMap map[int]*DiningStruct
@@ -113,6 +113,9 @@ func GetOffers(page string) DiningMap  {
 	}
 
    return dining
+}
+
+func SaveOffers(d DiningMap) {
 }
 
 func init() {

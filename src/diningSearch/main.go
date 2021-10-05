@@ -61,6 +61,7 @@ func main() {
       
       page := GetPage(disney.Key("url").String(), searchDate, searchTime, searchSize)
       offers := GetOffers(page)
+      SaveOffers(offers)
       log.Printf("Looking for %q, list of %d", searchLocs, len(offers))
       for _, offer := range offers {
          if StringIn(searchLocs, offer.Name) {
