@@ -4,7 +4,7 @@ package main
 
 import (
    "os"
-	"log"
+   "log"
    "gopkg.in/ini.v1"
 )
 
@@ -19,6 +19,9 @@ func main() {
    if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
       clearTimestamps()
    }
+
+   // info
+   displayBuildInfo()
 
    // Start a Timer to make sure we get done
    StartTimer(cfg.Section("DEFAULT").Key("timeout").MustString("10m"))
