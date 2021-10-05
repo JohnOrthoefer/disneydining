@@ -10,11 +10,16 @@ import (
    "io/ioutil"
 )
 
+type AvailStruct struct {
+   When time.Time
+   Link string
+}
+
 type DiningStruct struct {
 	Name  string
 	ID    int
 	URL   string
-	Avail []time.Time
+	Avail []AvailStruct
 }
 
 type DiningMap map[int]*DiningStruct
@@ -68,14 +73,9 @@ func GetOffers(page string) DiningMap  {
 		log.Fatal(err)
 	}
 
-	searchTime := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Contents().Eq(1).Text()
-
-	log.Printf("Time: %s", searchTime)
-
 	sel := doc.Find("div.cardLink.finderCard.hasLink")
 
 	for i := range sel.Nodes {
-		var times []string
 
 		single := sel.Eq(i)
 		location := single.Find("h2.cardName").Contents().Text()
@@ -104,14 +104,14 @@ func GetOffers(page string) DiningMap  {
       }
 		t.Each(func(i int, s *goquery.Selection) {
          tempTime, _ := s.Attr("data-servicedatetime")
-         times = append(times, tempTime)
+         w, _ :=  time.Parse("2006-01-02T15:04:05-07:00", tempTime)
+         tempLink, _ := s.Attr("data-bookinglink")
+         dining[idNum].Avail = append(dining[idNum].Avail,
+            AvailStruct {
+               When: w,
+               Link: tempLink,
+         })
 		})
-
-		for _, v := range times {
-			resTime, _ := time.Parse("2006-01-02T15:04:05-07:00", v)
-			dining[idNum].Avail = append(dining[idNum].Avail, resTime)
-		}
-
 	}
 
    return dining

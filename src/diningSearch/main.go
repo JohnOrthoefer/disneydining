@@ -77,7 +77,7 @@ func main() {
       for _, offer := range offers {
          if StringIn(searchLocs, offer.Name) {
             s := MakeMsg(offer.Name, offer.URL, offer.Avail)
-            if SameDate(offer.Avail[0], searchDate) {
+            if SameDate(offer.Avail[0].When, searchDate) {
                log.Printf("Found!!!  %s", s)
                Notify(s)
             } else {
