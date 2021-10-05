@@ -9,6 +9,16 @@ import (
    "net/smtp"
 )
 
+/*
+type mailNotify {
+   server   string
+   from     string
+   to       []string
+}
+
+var notifyAddrs map[string]mailNotify
+*/
+
 func MakeMsg(loc, u string, when []time.Time) string {
    date := when[0].Format("Mon, Jan _2 2006")
    var times []string
