@@ -9,11 +9,21 @@ import (
 )
 
 func main() {
+   // Read the config file
    cfg, err := ini.Load("config.ini")
    if err != nil {
       log.Fatal("Failed to read config.ini file")
    }
 
+   // Enable/Disable Timestamps
+   if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
+      clearTimestamps()
+   }
+
+   // Start a Timer to make sure we get done
+   StartTimer(cfg.Section("DEFAULT").Key("timeout").MustString("10m"))
+
+   // Read the dining file This will get moved to the config file
    scheduleFile := "dining.ini"
    if len(os.Args) > 1 {
       scheduleFile = os.Args[1]
@@ -22,13 +32,9 @@ func main() {
    if err != nil {
       log.Fatal("Failed to read %s file", scheduleFile)
    }
-
-   if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
-      clearTimestamps()
-   }
-
    log.Printf("Schedule: %s", scheduleFile)
 
+   // get params
    browser := cfg.Section("browser")
    disney := cfg.Section("disney")
 
@@ -75,4 +81,5 @@ func main() {
          }
       }
    }
+   StopTimer()
 }
