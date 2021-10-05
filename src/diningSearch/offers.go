@@ -6,13 +6,15 @@ import (
 	"strconv"
 	"strings"
    "time"
+   "encoding/json"
+   "io/ioutil"
 )
 
 type DiningStruct struct {
-	Name  string      `json:"name"`
-	ID    int         `json:"id"`
-	URL   string      `json:"url"`
-	Avail []time.Time `json:"availible"`
+	Name  string
+	ID    int
+	URL   string
+	Avail []time.Time
 }
 
 type DiningMap map[int]*DiningStruct
@@ -115,7 +117,9 @@ func GetOffers(page string) DiningMap  {
    return dining
 }
 
-func SaveOffers(d DiningMap) {
+func SaveOffers(n string, d []DiningMap) {
+   data, _ := json.MarshalIndent(d, "", " ")
+   ioutil.WriteFile(n, data, 0644)
 }
 
 func init() {

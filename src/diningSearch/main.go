@@ -44,6 +44,8 @@ func main() {
    defLocs := dining.Section("DEFAULT").Key("restaurants").Strings(",")
    defEnable := dining.Section("DEFAULT").Key("enabled").MustBool(true)
 
+   var allOffers []DiningMap
+
    for _, s := range dining.Sections() {
       searchName := s.Name()
       if searchName == "DEFAULT" { continue }
@@ -67,7 +69,7 @@ func main() {
       
       page := GetPage(disney.Key("url").String(), searchDate, searchTime, searchSize)
       offers := GetOffers(page)
-      SaveOffers(offers)
+      allOffers = append(allOffers, offers)
       log.Printf("Looking for %q, list of %d", searchLocs, len(offers))
       for _, offer := range offers {
          if StringIn(searchLocs, offer.Name) {
@@ -80,6 +82,12 @@ func main() {
             }
          }
       }
+   }
+
+   if cfg.Section("DEFAULT").HasKey("saveoffers") {
+      offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+      log.Printf("Saving offers to %s", offersName)
+      SaveOffers(offersName, allOffers)
    }
    StopTimer()
 }
