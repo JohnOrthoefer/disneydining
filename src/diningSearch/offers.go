@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"time"
+   "time"
 )
 
 type DiningStruct struct {
@@ -16,14 +16,32 @@ type DiningStruct struct {
 }
 
 type DiningMap map[int]*DiningStruct
+var disneyTZ *time.Location
+var disneyToday time.Time
 
-func CheckDate(when string) bool {
-   w, err := time.Parse("01/_2/2006", when)
+// checks that a and b are the same date
+func SameDate(a time.Time, b string) bool {
+   w, err := time.ParseInLocation("01/_2/2006", b, disneyTZ)
    if err != nil {
       log.Printf("Date Check error %s", err)
       return false
    }
-   return w.After(time.Now())
+   n := time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, disneyTZ)
+//   log.Printf("Same when:%s w:%s n:%s", b, w.String(), n.String())
+   return w.Equal(n)
+}
+   
+
+// Check that string is after today
+func CheckDate(when string) bool {
+   w, err := time.ParseInLocation("01/_2/2006", when, disneyTZ)
+   if err != nil {
+      log.Printf("Date Check error %s", err)
+      return false
+   }
+   n := disneyToday
+//   log.Printf("Checking when:%s w:%s n:%s", when, w.String(), n.String())
+   return w.After(n)
 }
 
 func StringIn(set []string, t string) bool {
@@ -95,4 +113,14 @@ func GetOffers(page string) DiningMap  {
 	}
 
    return dining
+}
+
+func init() {
+   tz, err := time.LoadLocation("America/New_York")
+   if err != nil {
+      log.Fatal("Can not load US/Eastern Time Zone")
+   }
+   disneyTZ = tz
+   n := time.Now().In(disneyTZ)
+   disneyToday = time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, disneyTZ)
 }

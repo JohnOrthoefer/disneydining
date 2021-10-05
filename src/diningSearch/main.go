@@ -65,8 +65,12 @@ func main() {
       for _, offer := range offers {
          if StringIn(searchLocs, offer.Name) {
             s := MakeMsg(offer.Name, offer.URL, offer.Avail)
-            Notify(s)
-            log.Printf("Found!!!  %s", s)
+            if SameDate(offer.Avail[0], searchDate) {
+               log.Printf("Found!!!  %s", s)
+               Notify(s)
+            } else {
+               log.Printf("Date Mismatch %s  %s", searchDate, s)
+            }
          }
       }
    }
