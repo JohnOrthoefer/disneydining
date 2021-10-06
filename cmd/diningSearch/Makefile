@@ -1,4 +1,4 @@
-SRC=log.go main.go search.go timeout.go
+SRC= main.go search.go log.go
 EXE=diningSearch
 #GOLANG=/usr/local/go/bin/go
 GOLANG=/usr/bin/go

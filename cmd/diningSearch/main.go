@@ -7,6 +7,7 @@ import (
    "log"
    "disneydining/internal/offers"
    "disneydining/internal/mail"
+   "disneydining/internal/timeout"
    "gopkg.in/ini.v1"
 )
 
@@ -26,7 +27,7 @@ func main() {
    displayBuildInfo()
 
    // Start a Timer to make sure we get done
-   StartTimer(cfg.Section("DEFAULT").Key("timeout").MustString("10m"))
+   timeout.StartTimer(cfg.Section("DEFAULT").Key("timeout").MustString("10m"))
 
    // Read the dining file This will get moved to the config file
    scheduleFile := "dining.ini"
@@ -108,5 +109,5 @@ func main() {
       log.Printf("Saving offers to %s", offersName)
       offers.SaveOffers(offersName, allOffers)
    }
-   StopTimer()
+   timeout.StopTimer()
 }
