@@ -2,9 +2,9 @@ package offers
 
 import (
     "github.com/PuerkitoBio/goquery"
-	"log"
-	"strconv"
-	"strings"
+    "log"
+    "strconv"
+    "strings"
     "time"
     "encoding/json"
     "io/ioutil"
