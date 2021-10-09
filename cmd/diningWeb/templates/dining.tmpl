@@ -1,0 +1,33 @@
+{{ template "header" . }}
+
+<script type="text/javascript" class="init">
+
+$(document).ready(function () {
+$('#dining').DataTable({
+      "pageLength": 50,
+      "scrollY":    "70vh",
+      "scrollCollapse": true,
+      "paging": false,
+      "ajax": {
+        "url": '?api=offers.json',
+        "cache": true
+      },
+      "columns": [ 
+        { "title": "Location", "data": ".Name",
+          "render": function (data, type, row) { 
+            return '<a href="'+row.URL+'">'+row.Name+'</a>'}},
+        { "title": "Date", "data": ".Date"},
+        { "title": "Times", "data": ".Time"}
+      ]
+    });
+
+  //setInterval( function() {$('#DHCPLeases').DataTable().ajax.reload(); }, 5000);
+  });
+</script> 
+
+<table id="dining" class="table table-striped" style="width:90%">
+</table>
+
+{{ template "footer" . }}
+<!-- vim: noai:ts=2:sw=2:set expandtab: -->
+
