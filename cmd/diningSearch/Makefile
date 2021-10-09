@@ -1,4 +1,4 @@
-SRC= main.go search.go log.go
+SRC= main.go search.go log.go ../../internal/offers/offers.go
 EXE=diningSearch
 #GOLANG=/usr/local/go/bin/go
 GOLANG=/usr/bin/go
