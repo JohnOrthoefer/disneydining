@@ -122,6 +122,13 @@ func SaveOffers(n string, d []DiningMap) {
    ioutil.WriteFile(n, data, 0644)
 }
 
+func LoadOffers(n string) []DiningMap {
+   j, _ := ioutil.ReadFile(n)
+   var rtn []DiningMap
+   json.Unmarshal(j, &rtn)
+   return rtn
+}
+
 func init() {
    tz, err := time.LoadLocation("America/New_York")
    if err != nil {
@@ -131,3 +138,5 @@ func init() {
    n := time.Now().In(disneyTZ)
    disneyToday = time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, disneyTZ)
 }
+
+// vim: noai:ts=4:sw=4:set expandtab:
