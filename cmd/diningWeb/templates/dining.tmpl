@@ -3,6 +3,8 @@
 <script type="text/javascript" class="init">
 
 $(document).ready(function () {
+  var collapsedGroups = {};
+
   $('#dining').DataTable({
     "pageLength": 50,
     "scrollY":    "70vh",
@@ -12,20 +14,44 @@ $(document).ready(function () {
       "url": '?api=offers.json',
       "cache": true
     },
+    "rowGroup": {
+      dataSrc: "Name",
+      startRender: function (rows, group) {
+        var collapsed = !collapsedGroups[group];
+
+        rows.nodes().each(function (r) {
+          r.style.display = collapsed ? 'none' : '';
+        });   
+        return $('<tr/>')
+          .append( '<td colspan="3"><a href="'+rows.data().pluck('URL')[0]+'">'+group+'</a></td>')
+          .attr('data-name', group)
+          .toggleClass('collapsed', collapsed);
+      }
+    },
     "columns": [ 
       { "title": "Location", "data": ".Name",
         "render": function (data, type, row) { 
-          return '<a href="'+row.URL+'">'+row.Name+'</a>'}},
+          return row.Name}},
       { "title": "Date", "data": ".Date"},
       { "title": "Times", "data": ".Time"}
-    ]});
+    ]
+  });
+
+   $('#dining tbody').on('click', 'tr.dtrg-start', function () {
+        var name = $(this).data('name');
+        console.log($(this).data('name'));
+        collapsedGroups[name] = !collapsedGroups[name];
+        $('#dining').DataTable().ajax.reload();
+    });  
 
   //setInterval( function() {$('#DHCPLeases').DataTable().ajax.reload(); }, 5000);
   });
 </script> 
 
-<table id="dining" class="table table-striped" style="width:90%">
-<tr><td>No Data</td></tr>
+<table id="dining" class="table" style="width:90%">
+  <thead>
+    <tr><th>Location</th><th>Date</th><th>Times</th></tr>
+  </thead>
 </table>
 
 {{ template "footer" . }}
