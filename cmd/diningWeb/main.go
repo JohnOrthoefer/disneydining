@@ -11,8 +11,10 @@ import (
     "disneydining/internal/offers"
 )
 
+const offersFile = "/tmp/dining/offers.json"
 
 type Offers struct {
+    Location string
     Name    string
     URL     string
     Date    string
@@ -53,11 +55,12 @@ func getTemplate(s string) (string, error) {
 func getJson(s string) (string, error) {
     var tmpData []Offers
 
-    j := offers.LoadOffers("offers.json")
+    j := offers.LoadOffers(offersFile)
     log.Printf("Data Size %d", len(j))
     for _, i:=range j {
         for _, offer:=range i {
             var t Offers
+            t.Location = offer.Loc
             t.Name = offer.Name
             t.URL  = offer.URL
             t.Date = offer.Avail[0].When.Format("02 Jan 2006")

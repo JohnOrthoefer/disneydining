@@ -17,6 +17,8 @@ type AvailStruct struct {
 
 type DiningStruct struct {
     Name  string
+    Loc   string
+    Meal  string
     ID    int
     URL   string
     Avail []AvailStruct
@@ -71,9 +73,9 @@ func GetOffers(page string) DiningMap  {
     }
 
     sel := doc.Find("div.cardLink.finderCard.hasLink")
+    meal := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
 
     for i := range sel.Nodes {
-
         single := sel.Eq(i)
         location := single.Find("h2.cardName").Contents().Text()
 
@@ -97,6 +99,8 @@ func GetOffers(page string) DiningMap  {
                 Name: location,
                 ID:   idNum,
                 URL:  url,
+                Meal: meal,
+                Loc:  (strings.Split(url, "/"))[4],
             }
         }
         t.Each(func(i int, s *goquery.Selection) {

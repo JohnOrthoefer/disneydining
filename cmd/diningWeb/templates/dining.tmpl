@@ -15,7 +15,7 @@ $(document).ready(function () {
       "cache": true
     },
     "rowGroup": {
-      dataSrc: "Name",
+      dataSrc: ["Name"],
       startRender: function (rows, group) {
         var collapsed = !collapsedGroups[group];
 
@@ -23,26 +23,36 @@ $(document).ready(function () {
           r.style.display = collapsed ? 'none' : '';
         });   
         return $('<tr/>')
+          .append( '<td>'+rows.data().pluck('Location')[0]+'</td>')
           .append( '<td colspan="3"><a href="'+rows.data().pluck('URL')[0]+'">'+group+'</a></td>')
           .attr('data-name', group)
           .toggleClass('collapsed', collapsed);
       }
     },
     "columns": [ 
-      { "title": "Location", "data": ".Name",
-        "render": function (data, type, row) { 
-          return row.Name}},
-      { "title": "Date", "data": ".Date"},
-      { "title": "Times", "data": ".Time"}
+      { "title": "Location", "data": ".Location" },
+      { "title": "Resturant", "data": ".Name",
+        "orderable": true,
+        "render": 
+          function (data, type, row) { 
+            return row.Name;
+          }
+      },
+      { "title": "Date", "data": ".Date",
+        "orderable": false
+      },
+      { "title": "Times", "data": ".Time",
+        "orderable": false
+      }
     ]
   });
 
-   $('#dining tbody').on('click', 'tr.dtrg-start', function () {
-        var name = $(this).data('name');
-        console.log($(this).data('name'));
-        collapsedGroups[name] = !collapsedGroups[name];
-        $('#dining').DataTable().ajax.reload();
-    });  
+  $('#dining tbody').on('click', 'tr.dtrg-start', function () {
+    var name = $(this).data('name');
+    collapsedGroups[name] = !collapsedGroups[name];
+//    $('#dining').DataTable().ajax.reload();
+    $('#dining').DataTable().draw(false);
+  });  
 
   //setInterval( function() {$('#DHCPLeases').DataTable().ajax.reload(); }, 5000);
   });
@@ -50,7 +60,7 @@ $(document).ready(function () {
 
 <table id="dining" class="table" style="width:90%">
   <thead>
-    <tr><th>Location</th><th>Date</th><th>Times</th></tr>
+    <tr><th>Location</th><th>Resturant</th><th>Date</th><th>Times</th></tr>
   </thead>
 </table>
 
