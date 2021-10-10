@@ -25,7 +25,7 @@ $(document).ready(function () {
         });   
         return $('<tr/>')
           .append( '<td>'+rows.data().pluck('Location')[0]+'</td>')
-          .append( '<td colspan="3"><a href="'+rows.data().pluck('URL')[0]+'">'+group+'</a></td>')
+          .append( '<td colspan="4"><a href="'+rows.data().pluck('URL')[0]+'" target="_blank">'+group+'</a></td>')
           .attr('data-name', group)
           .toggleClass('collapsed', collapsed);
       }
@@ -42,8 +42,15 @@ $(document).ready(function () {
       { "title": "Date", "data": ".Date",
         "orderable": false
       },
-      { "title": "Times", "data": ".Time",
+      { "title": "Meal", "data": ".Meal",
         "orderable": false
+      },
+      { "title": "Times", "data": ".Time",
+        "orderable": false,
+        "render": 
+          function (data, type, row) { 
+            return data.join(" - ");
+          }
       }
     ]
   });
@@ -61,7 +68,13 @@ $(document).ready(function () {
 
 <table id="dining" class="table" style="width:90%">
   <thead>
-    <tr><th>Location</th><th>Restaurant</th><th>Date</th><th>Times</th></tr>
+    <tr>
+      <th>Location</th>
+      <th>Restaurant</th>
+      <th>Date</th>
+      <th>Meal</th>
+      <th>Times</th>
+    </tr>
   </thead>
 </table>
 

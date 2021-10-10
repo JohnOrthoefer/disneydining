@@ -19,6 +19,7 @@ type Offers struct {
     Name    string
     URL     string
     Date    string
+    Meal    string
     Time    []string
 }
 var tmpls *template.Template
@@ -62,6 +63,7 @@ func getJson(s string) (string, error) {
             t.Name = offer.Name
             t.URL  = offer.URL
             t.Date = offer.Avail[0].When.Format("02 Jan 2006")
+            t.Meal = offer.Meal
             for _, tm := range offer.Avail {
                 t.Time = append(t.Time, tm.When.Format("03:04 PM"))
             }
