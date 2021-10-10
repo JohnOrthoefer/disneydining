@@ -74,6 +74,9 @@ func getJson(s string) (string, error) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+    type webVars struct {
+        PageTitle string
+    }
 	urlPath := r.URL.String()
 	urlQuery := r.URL.Query()
     if urlPath == "/favicon.ico" {
@@ -83,7 +86,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
     if v, found := urlQuery["page"]; found {
         t, err := getTemplate(v[0])
         if err == nil {
-            tmpls.ExecuteTemplate(w, t, nil)
+            tmpls.ExecuteTemplate(w, t, &webVars {
+               PageTitle: "Dining Availablity",
+            })
         } else {
             log.Printf("Template %s not found", v[0])
         }
@@ -99,10 +104,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
         }
         return
     }
-//    if _, found := urlQuery["reload"]; found {
-//        loadTemplates()
-//        return
-//    }
 }
    
 func main() {
@@ -129,7 +130,9 @@ func main() {
     }
 
     http.HandleFunc("/", handler)
-    log.Fatal(http.ListenAndServe(webcfg.Key("listen").MustString(":8099"), nil))
+    listen := webcfg.Key("listen").MustString(":8099")
+    log.Printf("Starting Web Server, %s", listen)
+    log.Fatal(http.ListenAndServe(listen, nil))
 }
 
 // vim: noai:ts=4:sw=4:set expandtab:
