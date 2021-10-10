@@ -9,6 +9,7 @@ import (
     "strings"
     "encoding/json"
     "disneydining/internal/offers"
+    "gopkg.in/ini.v1"
 )
 
 const offersFile = "/tmp/dining/offers.json"
@@ -21,6 +22,7 @@ type Offers struct {
     Time    []string
 }
 var tmpls *template.Template
+var xlatLoc map[string]string
 
 func checkError(e error) {
     if e != nil {
@@ -28,13 +30,9 @@ func checkError(e error) {
     }
 }
 
-func loadTemplates() {
-    rtn, err := template.ParseGlob("templates/*.tmpl")
+func loadTemplates(tmplDir string) {
+    rtn, err := template.ParseGlob(tmplDir)
     checkError(err)
-
-    for _, i := range rtn.Templates() {
-        log.Printf("Loading- %s", i.Name())
-    }
     tmpls = rtn
 }
 
@@ -56,11 +54,11 @@ func getJson(s string) (string, error) {
     var tmpData []Offers
 
     j := offers.LoadOffers(offersFile)
-    log.Printf("Data Size %d", len(j))
     for _, i:=range j {
         for _, offer:=range i {
             var t Offers
             t.Location = offer.Loc
+            if v, found := xlatLoc[offer.Loc]; found { t.Location = v }
             t.Name = offer.Name
             t.URL  = offer.URL
             t.Date = offer.Avail[0].When.Format("02 Jan 2006")
@@ -101,17 +99,37 @@ func handler(w http.ResponseWriter, r *http.Request) {
         }
         return
     }
-    if _, found := urlQuery["reload"]; found {
-        loadTemplates()
-        return
-    }
+//    if _, found := urlQuery["reload"]; found {
+//        loadTemplates()
+//        return
+//    }
 }
    
 func main() {
-    loadTemplates()
+    // Read the config file
+    cfg, err := ini.Load("config.ini")
+    if err != nil {
+        log.Fatal("Failed to read config.ini file")
+    }
+
+    // Enable/Disable Timestamps
+    if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
+        log.SetFlags(0)
+    }
+
+    // info
+    displayBuildInfo()
+
+    webcfg := cfg.Section("webserver")
+    loadTemplates(webcfg.Key("templates").MustString("templates/*.tmpl"))
+
+    xlatLoc = make(map[string]string)
+    for _, i := range cfg.Section("locations").Keys() {
+        xlatLoc[i.Name()] = i.String()
+    }
 
     http.HandleFunc("/", handler)
-    log.Fatal(http.ListenAndServe(":8099", nil))
+    log.Fatal(http.ListenAndServe(webcfg.Key("listen").MustString(":8099"), nil))
 }
 
 // vim: noai:ts=4:sw=4:set expandtab:

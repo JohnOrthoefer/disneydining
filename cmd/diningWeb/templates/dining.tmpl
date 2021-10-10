@@ -10,6 +10,7 @@ $(document).ready(function () {
     "scrollY":    "70vh",
     "scrollCollapse": true,
     "paging": false,
+    "order": [[1, "asc"], [0, "asc"]],
     "ajax": {
       "url": '?api=offers.json',
       "cache": true
@@ -31,7 +32,7 @@ $(document).ready(function () {
     },
     "columns": [ 
       { "title": "Location", "data": ".Location" },
-      { "title": "Resturant", "data": ".Name",
+      { "title": "Restaurant", "data": ".Name",
         "orderable": true,
         "render": 
           function (data, type, row) { 
@@ -60,7 +61,7 @@ $(document).ready(function () {
 
 <table id="dining" class="table" style="width:90%">
   <thead>
-    <tr><th>Location</th><th>Resturant</th><th>Date</th><th>Times</th></tr>
+    <tr><th>Location</th><th>Restaurant</th><th>Date</th><th>Times</th></tr>
   </thead>
 </table>
 
