@@ -2,6 +2,8 @@ package main
 
 import (
     "html/template"
+    "os"
+    "strconv"
     "log"
     "errors"
 	"net/http"
@@ -12,7 +14,6 @@ import (
     "gopkg.in/ini.v1"
 )
 
-const offersFile = "/tmp/dining/offers.json"
 
 type Offers struct {
     Location string
@@ -24,6 +25,7 @@ type Offers struct {
 }
 var tmpls *template.Template
 var xlatLoc map[string]string
+var offersFile string = "/tmp/dining/offers.json"
 
 func checkError(e error) {
     if e != nil {
@@ -51,10 +53,12 @@ func getTemplate(s string) (string, error) {
     return "", errors.New("Not found")
 }
 
-func getJson(s string) (string, error) {
-    var tmpData []Offers
+func getOffers(s string) ([]byte, error) {
+    var tmpData struct {
+        Data []Offers `json:"data"`
+    }
 
-    j := offers.LoadOffers(offersFile)
+    j := offers.LoadOffers(s)
     for _, i:=range j {
         for _, offer:=range i {
             var t Offers
@@ -67,18 +71,66 @@ func getJson(s string) (string, error) {
             for _, tm := range offer.Avail {
                 t.Time = append(t.Time, tm.When.Format("03:04 PM"))
             }
-            tmpData = append(tmpData, t)
+            tmpData.Data = append(tmpData.Data, t)
         }
     }
     
-    data, err := json.MarshalIndent(tmpData, "", " ")
-	return string(data), err
+    return json.MarshalIndent(tmpData, "", " ")
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func offersTimestamp(s string) ([]byte, error) {
+    var tmpData struct {
+        OffersSize string
+        OffersTime int64 
+    }
+
+    t, err := os.Stat(s)
+    if err != nil {
+        return nil, err
+    }
+
+    tmpData.OffersSize = strconv.FormatInt(t.Size(), 10)
+    tmpData.OffersTime = t.ModTime().Unix()
+    return json.MarshalIndent(tmpData, "", " ")
+}
+
+func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
+    var j []byte
+    var err error
+
+    switch page {
+        case "offers.json":
+            j, err = getOffers(offersFile)
+        case "update":
+            j, err = offersTimestamp(offersFile)
+        default:
+            log.Printf("Could not find %s", page)
+            return
+    }
+    if err != nil {
+        log.Printf("No JSON %s", page)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json; charset=utf-8")
+    w.Write(j)
+}
+
+func handlePage(page string, w http.ResponseWriter, r *http.Request) {
     type webVars struct {
         PageTitle string
     }
+
+    t, err := getTemplate(page)
+    if err != nil {
+        log.Printf("Template %s not found", page)
+        return
+    }
+    tmpls.ExecuteTemplate(w, t, &webVars {
+        PageTitle: "Dining Availablity",
+    })
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.String()
 	urlQuery := r.URL.Query()
     if urlPath == "/favicon.ico" {
@@ -86,24 +138,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
     }
 	log.Printf("Request from %s: url=%v query=%v\n", r.Host, urlPath, urlQuery)
     if v, found := urlQuery["page"]; found {
-        t, err := getTemplate(v[0])
-        if err == nil {
-            tmpls.ExecuteTemplate(w, t, &webVars {
-               PageTitle: "Dining Availablity",
-            })
-        } else {
-            log.Printf("Template %s not found", v[0])
-        }
+        handlePage(v[0], w, r)
         return
     }
     if v, found := urlQuery["api"]; found {
-        j, err := getJson(v[0])
-        if err == nil {
-            w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			w.Write([]byte("{\"data\":" + j + "}"))
-        } else {
-            log.Printf("No JSON %s", v[0])
-        }
+        handleJSON(v[0], w, r)
         return
     }
 }
@@ -115,13 +154,17 @@ func main() {
         log.Fatal("Failed to read config.ini file")
     }
 
+    iniDefaults := cfg.Section("DEFAULT")
+
     // Enable/Disable Timestamps
-    if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
+    if !iniDefaults.Key("timestamps").MustBool(true) {
         log.SetFlags(0)
     }
 
     // info
     displayBuildInfo()
+    
+    offersFile = iniDefaults.Key("saveoffers").MustString(offersFile)
 
     webcfg := cfg.Section("webserver")
     loadTemplates(webcfg.Key("templates").MustString("templates/*.tmpl"))

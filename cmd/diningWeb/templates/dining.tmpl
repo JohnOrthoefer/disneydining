@@ -62,9 +62,16 @@ $(document).ready(function () {
     $('#dining').DataTable().draw(false);
   });  
 
+  $.getJSON('?api=update', (data) => {
+    console.log(data.OffersTime);
+    $('#Updated-Offers').text(new Date(data.OffersTime*1000).toISOString());
+  });
+
   //setInterval( function() {$('#DHCPLeases').DataTable().ajax.reload(); }, 5000);
   });
 </script> 
+
+<h2>Last updated: <span id="Updated-Offers"></span></h2>
 
 <table id="dining" class="table" style="width:90%">
   <thead>
