@@ -74,7 +74,8 @@ func GetOffers(page string) DiningMap  {
 
     sel := doc.Find("div.cardLink.finderCard.hasLink")
     meal := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
-
+    meal = meal[30:]
+    meal = meal[:len(meal)-20]
     for i := range sel.Nodes {
         single := sel.Eq(i)
         location := single.Find("h2.cardName").Contents().Text()
