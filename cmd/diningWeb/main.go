@@ -173,8 +173,12 @@ func main() {
     offersFile = iniDefaults.Key("saveoffers").MustString(offersFile)
 
     webcfg := cfg.Section("webserver")
+    listen := webcfg.Key("listen").MustString(":8099")
+    loadTemplates(webcfg.Key("tmplfiles").MustString("templates/*.tmpl"))
+
+    tmplcfg := cfg.Section("templates")
     tmplIndex = make(map[string]URLs)
-    for _, p := range webcfg.Keys() {
+    for _, p := range tmplcfg.Keys() {
         tp, err := cfg.GetSection(p.String())
         if err != nil { continue }
         tmplEnt := URLs {
@@ -187,15 +191,12 @@ func main() {
         tmplIndex[p.Name()] = tmplEnt
     }
     
-    loadTemplates(webcfg.Key("templates").MustString("templates/*.tmpl"))
-
     xlatLoc = make(map[string]string)
     for _, i := range cfg.Section("locations").Keys() {
         xlatLoc[i.Name()] = i.String()
     }
 
     http.HandleFunc("/", handler)
-    listen := webcfg.Key("listen").MustString(":8099")
     log.Printf("Starting Web Server, %s", listen)
     log.Fatal(http.ListenAndServe(listen, nil))
 }
