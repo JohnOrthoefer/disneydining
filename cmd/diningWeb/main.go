@@ -23,10 +23,14 @@ type Offers struct {
     Meal    string
     Time    []string
 }
+type URLs struct {
+    TmplName    string
+    Vars    map [string]string
+}
 var tmpls *template.Template
+var tmplIndex map[string]URLs
 var xlatLoc map[string]string
 var offersFile string = "/tmp/dining/offers.json"
-
 func checkError(e error) {
     if e != nil {
         log.Printf("Error: %s", e)
@@ -36,6 +40,9 @@ func checkError(e error) {
 func loadTemplates(tmplDir string) {
     rtn, err := template.ParseGlob(tmplDir)
     checkError(err)
+    for _,i := range rtn.Templates() {
+        log.Printf("Template: %s", i.Name())
+    }
     tmpls = rtn
 }
 
@@ -115,19 +122,17 @@ func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
     w.Write(j)
 }
 
-func handlePage(page string, w http.ResponseWriter, r *http.Request) {
-    type webVars struct {
-        PageTitle string
-    }
-
-    t, err := getTemplate(page)
-    if err != nil {
-        log.Printf("Template %s not found", page)
+func handlePage(request string, w http.ResponseWriter, r *http.Request) {
+    req, ok := tmplIndex[request]
+    if !ok {
         return
     }
-    tmpls.ExecuteTemplate(w, t, &webVars {
-        PageTitle: "Dining Availablity",
-    })
+    if tmpls.Lookup(req.TmplName) == nil {
+        log.Printf("Template %s not found, (%s)", request, req.TmplName)
+        return
+    }
+    log.Printf("Requested %s maps to %s", request, req.TmplName)
+    tmpls.ExecuteTemplate(w, req.TmplName, &req.Vars)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -145,6 +150,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
         handleJSON(v[0], w, r)
         return
     }
+    handlePage("default", w, r)
 }
    
 func main() {
@@ -167,6 +173,20 @@ func main() {
     offersFile = iniDefaults.Key("saveoffers").MustString(offersFile)
 
     webcfg := cfg.Section("webserver")
+    tmplIndex = make(map[string]URLs)
+    for _, p := range webcfg.Keys() {
+        tp, err := cfg.GetSection(p.String())
+        if err != nil { continue }
+        tmplEnt := URLs {
+            TmplName:   tp.Key("template").String(),
+            Vars:       make(map[string]string),
+        }
+        for _, t := range tp.Keys() {
+            tmplEnt.Vars[t.Name()] = t.String()
+        }
+        tmplIndex[p.Name()] = tmplEnt
+    }
+    
     loadTemplates(webcfg.Key("templates").MustString("templates/*.tmpl"))
 
     xlatLoc = make(map[string]string)
