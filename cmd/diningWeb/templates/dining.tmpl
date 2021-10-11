@@ -32,21 +32,22 @@ $(document).ready(function () {
       }
     },
     "columns": [ 
-      { "title": "Location", "data": ".Location" },
-      { "title": "Restaurant", "data": ".Name",
-        "orderable": true,
-        "render": 
-          function (data, type, row) { 
-            return row.Name;
-          }
+      { "title": "Location",
+        "data": ".Location"
       },
-      { "title": "Date", "data": ".Date",
+      { "title": "Restaurant",
+        "data": ".Name"
+      },
+      { "title": "Date", 
+        "data": ".Date",
         "orderable": false
       },
-      { "title": "Meal", "data": ".Meal",
+      { "title": "Meal", 
+        "data": ".Meal",
         "orderable": false
       },
-      { "title": "Times", "data": ".Time",
+      { "title": "Times", 
+        "data": ".Time",
         "orderable": false,
         "render": 
           function (data, type, row) { 
@@ -78,7 +79,7 @@ $(document).ready(function () {
 });
 </script> 
 
-<h2>Last updated: <span id="Updated-Offers"></span></h2>
+<h3>Last updated: <span id="Updated-Offers"></span></h3>
 
 <table id="dining" class="table" style="width:90%">
   <thead>
