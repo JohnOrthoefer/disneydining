@@ -20,4 +20,8 @@
             <div class="col-1">
             </div>
             <div class="col-11">
+<script type="text/javascript">
+   const maybePluralize = (count, noun, suffix = 's') =>
+      `${count} ${noun}${count !== 1 ? suffix : ''}`;
+</script>
 {{ end }}

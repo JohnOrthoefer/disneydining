@@ -8,10 +8,12 @@ import (
     "time"
     "encoding/json"
     "io/ioutil"
+    "regexp"
 )
 
 type AvailStruct struct {
     When time.Time
+    Seats int
     Link string
 }
 
@@ -76,6 +78,13 @@ func GetOffers(page string) DiningMap  {
     meal := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
     meal = meal[30:]
     meal = meal[:len(meal)-20]
+
+    seatsRE := regexp.MustCompile(`[0-9]+`)
+
+    seatsTxt := doc.Find("#partySize-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
+    log.Printf("seatsTxt: %s; Match: %s", seatsTxt, seatsRE.FindString(seatsTxt))
+    seats, err := strconv.Atoi(seatsRE.FindString(seatsTxt))
+
     for i := range sel.Nodes {
         single := sel.Eq(i)
         location := single.Find("h2.cardName").Contents().Text()
@@ -111,6 +120,7 @@ func GetOffers(page string) DiningMap  {
             dining[idNum].Avail = append(dining[idNum].Avail,
             AvailStruct {
                 When: w,
+                Seats: seats,
                 Link: tempLink,
             })
         })

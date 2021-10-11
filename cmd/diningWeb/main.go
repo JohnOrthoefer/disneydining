@@ -21,6 +21,7 @@ type Offers struct {
     URL     string
     Date    string
     Meal    string
+    Seats   int
     Time    []string
 }
 type URLs struct {
@@ -75,6 +76,7 @@ func getOffers(s string) ([]byte, error) {
             t.URL  = offer.URL
             t.Date = offer.Avail[0].When.Format("02 Jan 2006")
             t.Meal = offer.Meal
+            t.Seats = offer.Avail[0].Seats
             for _, tm := range offer.Avail {
                 t.Time = append(t.Time, tm.When.Format("03:04 PM"))
             }

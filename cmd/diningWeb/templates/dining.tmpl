@@ -26,7 +26,12 @@ $(document).ready(function () {
         });   
         return $('<tr/>')
           .append( '<td>'+rows.data().pluck('Location')[0]+'</td>')
-          .append( '<td colspan="4"><a href="'+rows.data().pluck('URL')[0]+'" target="_blank">'+group+'</a></td>')
+          .append( '<td colspan="3"><a href="'+
+              rows.data().pluck('URL')[0]+
+              '" target="_blank">'+
+              group+
+              '</a><td>'+maybePluralize(rows.count(), 'Time')+
+              '</td>')
           .attr('data-name', group)
           .toggleClass('collapsed', collapsed);
       }
@@ -44,14 +49,18 @@ $(document).ready(function () {
       },
       { "title": "Meal", 
         "data": ".Meal",
-        "orderable": false
+        "orderable": false,
+        "render": 
+          function (data, type, row) {
+            return row.Meal+"<br/>For "+row.Seats;
+          }
       },
       { "title": "Times", 
         "data": ".Time",
         "orderable": false,
         "render": 
           function (data, type, row) { 
-            return data.join(" - ");
+            return data.join("<br />");
           }
       }
     ]
