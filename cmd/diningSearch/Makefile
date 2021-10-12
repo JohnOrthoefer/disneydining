@@ -1,4 +1,5 @@
-SRC= main.go search.go log.go ../../internal/offers/offers.go
+SRC= main.go search.go log.go
+INTERNAL=../../internal/offers/offers.go
 EXE=diningSearch
 #GOLANG=/usr/local/go/bin/go
 GOLANG=/usr/bin/go
@@ -10,7 +11,7 @@ NOW=$(shell date +%Y-%m-%d_%T)
 #export HTTP_PROXY=http://llproxy.llan.ll.mit.edu:8080
 #export HTTPS_PROXY=${HTTP_PROXY}
 
-diningSearch: ${SRC}
+diningSearch: ${SRC} ${INTENRAL}
 	echo ${REPONAME}
 	${GOLANG} build \
       -ldflags "-X main.sha1ver=${SHA1} -X main.buildTime=${NOW} -X main.repoName=${REPONAME}"
@@ -19,6 +20,9 @@ update: update-go update-json
 
 update-go:
 	${GOLANG} get gopkg.in/ini.v1
+
+pretty:
+	${GOLANG} fmt ${SRC}
 
 clean:
 	rm -f ${EXE}

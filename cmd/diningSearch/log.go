@@ -1,14 +1,15 @@
 package main
 
 import (
-   "log"
+	"log"
 )
 
 func setTimestamps() {
-   log.SetFlags(1)
+	log.SetFlags(1)
 }
 
 func clearTimestamps() {
-   log.SetFlags(0)
+	log.SetFlags(0)
 }
 
+// vim: noai:ts=4:sw=4:set expandtab:

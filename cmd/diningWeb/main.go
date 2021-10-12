@@ -1,50 +1,51 @@
 package main
 
 import (
-    "html/template"
-    "os"
-    "strconv"
-    "log"
-    "errors"
+	"disneydining/internal/offers"
+	"encoding/json"
+	"errors"
+	"gopkg.in/ini.v1"
+	"html/template"
+	"log"
 	"net/http"
-    "path/filepath"
-    "strings"
-    "encoding/json"
-    "disneydining/internal/offers"
-    "gopkg.in/ini.v1"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 )
 
-
 type Offers struct {
-    Location string
-    Name    string
-    URL     string
-    Date    string
-    Meal    string
-    Seats   int
-    Time    []string
+	Location string
+	Name     string
+	URL      string
+	Date     string
+	Meal     string
+	Seats    int
+	Time     []string
 }
 type URLs struct {
-    TmplName    string
-    Vars    map [string]string
+	TmplName string
+	Vars     map[string]string
 }
+
 var tmpls *template.Template
 var tmplIndex map[string]URLs
 var xlatLoc map[string]string
 var offersFile string = "/tmp/dining/offers.json"
+
 func checkError(e error) {
-    if e != nil {
-        log.Printf("Error: %s", e)
-    }
+	if e != nil {
+		log.Printf("Error: %s", e)
+	}
 }
 
 func loadTemplates(tmplDir string) {
-    rtn, err := template.ParseGlob(tmplDir)
-    checkError(err)
-    for _,i := range rtn.Templates() {
-        log.Printf("Template: %s", i.Name())
-    }
-    tmpls = rtn
+	rtn, err := template.ParseGlob(tmplDir)
+	checkError(err)
+	for _, i := range rtn.Templates() {
+		log.Printf("Template: %s", i.Name())
+	}
+	tmpls = rtn
 }
 
 func filenameWithoutExt(fileName string) string {
@@ -52,155 +53,159 @@ func filenameWithoutExt(fileName string) string {
 }
 
 func getTemplate(s string) (string, error) {
-    for _, i := range tmpls.Templates() {
-        v := i.Name()
-        if strings.TrimSuffix(v, ".tmpl") == s {
-            return v, nil
-        }
-    }
-    return "", errors.New("Not found")
+	for _, i := range tmpls.Templates() {
+		v := i.Name()
+		if strings.TrimSuffix(v, ".tmpl") == s {
+			return v, nil
+		}
+	}
+	return "", errors.New("Not found")
 }
 
 func getOffers(s string) ([]byte, error) {
-    var tmpData struct {
-        Data []Offers `json:"data"`
-    }
+	var tmpData struct {
+		Data []Offers `json:"data"`
+	}
 
-    j := offers.LoadOffers(s)
-    for _, i:=range j {
-        for _, offer:=range i {
-            var t Offers
-            t.Location = offer.Loc
-            if v, found := xlatLoc[offer.Loc]; found { t.Location = v }
-            t.Name = offer.Name
-            t.URL  = offer.URL
-            t.Date = offer.Avail[0].When.Format("02 Jan 2006")
-            t.Meal = offer.Meal
-            t.Seats = offer.Avail[0].Seats
-            for _, tm := range offer.Avail {
-                t.Time = append(t.Time, tm.When.Format("03:04 PM"))
-            }
-            tmpData.Data = append(tmpData.Data, t)
-        }
-    }
-    
-    return json.MarshalIndent(tmpData, "", " ")
+	j := offers.LoadOffers(s)
+	for _, i := range j {
+		for _, offer := range i {
+			var t Offers
+			t.Location = offer.Loc
+			if v, found := xlatLoc[offer.Loc]; found {
+				t.Location = v
+			}
+			t.Name = offer.Name
+			t.URL = offer.URL
+			t.Date = offer.Avail[0].When.Format("02 Jan 2006")
+			t.Meal = offer.Meal
+			t.Seats = offer.Avail[0].Seats
+			for _, tm := range offer.Avail {
+				t.Time = append(t.Time, tm.When.Format("03:04 PM"))
+			}
+			tmpData.Data = append(tmpData.Data, t)
+		}
+	}
+
+	return json.MarshalIndent(tmpData, "", " ")
 }
 
 func offersTimestamp(s string) ([]byte, error) {
-    var tmpData struct {
-        OffersSize string
-        OffersTime int64 
-    }
+	var tmpData struct {
+		OffersSize string
+		OffersTime int64
+	}
 
-    t, err := os.Stat(s)
-    if err != nil {
-        return nil, err
-    }
+	t, err := os.Stat(s)
+	if err != nil {
+		return nil, err
+	}
 
-    tmpData.OffersSize = strconv.FormatInt(t.Size(), 10)
-    tmpData.OffersTime = t.ModTime().Unix()
-    return json.MarshalIndent(tmpData, "", " ")
+	tmpData.OffersSize = strconv.FormatInt(t.Size(), 10)
+	tmpData.OffersTime = t.ModTime().Unix()
+	return json.MarshalIndent(tmpData, "", " ")
 }
 
 func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
-    var j []byte
-    var err error
+	var j []byte
+	var err error
 
-    switch page {
-        case "offers.json":
-            j, err = getOffers(offersFile)
-        case "update":
-            j, err = offersTimestamp(offersFile)
-        default:
-            log.Printf("Could not find %s", page)
-            return
-    }
-    if err != nil {
-        log.Printf("No JSON %s", page)
-        return
-    }
-    w.Header().Set("Content-Type", "application/json; charset=utf-8")
-    w.Write(j)
+	switch page {
+	case "offers.json":
+		j, err = getOffers(offersFile)
+	case "update":
+		j, err = offersTimestamp(offersFile)
+	default:
+		log.Printf("Could not find %s", page)
+		return
+	}
+	if err != nil {
+		log.Printf("No JSON %s", page)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Write(j)
 }
 
 func handlePage(request string, w http.ResponseWriter, r *http.Request) {
-    req, ok := tmplIndex[request]
-    if !ok {
-        return
-    }
-    if tmpls.Lookup(req.TmplName) == nil {
-        log.Printf("Template %s not found, (%s)", request, req.TmplName)
-        return
-    }
-    log.Printf("Requested %s maps to %s", request, req.TmplName)
-    tmpls.ExecuteTemplate(w, req.TmplName, &req.Vars)
+	req, ok := tmplIndex[request]
+	if !ok {
+		return
+	}
+	if tmpls.Lookup(req.TmplName) == nil {
+		log.Printf("Template %s not found, (%s)", request, req.TmplName)
+		return
+	}
+	log.Printf("Requested %s maps to %s", request, req.TmplName)
+	tmpls.ExecuteTemplate(w, req.TmplName, &req.Vars)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.String()
 	urlQuery := r.URL.Query()
-    if urlPath == "/favicon.ico" {
-        return
-    }
+	if urlPath == "/favicon.ico" {
+		return
+	}
 	log.Printf("Request from %s: url=%v query=%v\n", r.Host, urlPath, urlQuery)
-    if v, found := urlQuery["page"]; found {
-        handlePage(v[0], w, r)
-        return
-    }
-    if v, found := urlQuery["api"]; found {
-        handleJSON(v[0], w, r)
-        return
-    }
-    handlePage("default", w, r)
+	if v, found := urlQuery["page"]; found {
+		handlePage(v[0], w, r)
+		return
+	}
+	if v, found := urlQuery["api"]; found {
+		handleJSON(v[0], w, r)
+		return
+	}
+	handlePage("default", w, r)
 }
-   
+
 func main() {
-    // Read the config file
-    cfg, err := ini.Load("config.ini")
-    if err != nil {
-        log.Fatal("Failed to read config.ini file")
-    }
+	// Read the config file
+	cfg, err := ini.Load("config.ini")
+	if err != nil {
+		log.Fatal("Failed to read config.ini file")
+	}
 
-    iniDefaults := cfg.Section("DEFAULT")
+	iniDefaults := cfg.Section("DEFAULT")
 
-    // Enable/Disable Timestamps
-    if !iniDefaults.Key("timestamps").MustBool(true) {
-        log.SetFlags(0)
-    }
+	// Enable/Disable Timestamps
+	if !iniDefaults.Key("timestamps").MustBool(true) {
+		log.SetFlags(0)
+	}
 
-    // info
-    displayBuildInfo()
-    
-    offersFile = iniDefaults.Key("saveoffers").MustString(offersFile)
+	// info
+	displayBuildInfo()
 
-    webcfg := cfg.Section("webserver")
-    listen := webcfg.Key("listen").MustString(":8099")
-    loadTemplates(webcfg.Key("tmplfiles").MustString("templates/*.tmpl"))
+	offersFile = iniDefaults.Key("saveoffers").MustString(offersFile)
 
-    tmplcfg := cfg.Section("templates")
-    tmplIndex = make(map[string]URLs)
-    for _, p := range tmplcfg.Keys() {
-        tp, err := cfg.GetSection(p.String())
-        if err != nil { continue }
-        tmplEnt := URLs {
-            TmplName:   tp.Key("template").String(),
-            Vars:       make(map[string]string),
-        }
-        for _, t := range tp.Keys() {
-            tmplEnt.Vars[t.Name()] = t.String()
-        }
-        tmplIndex[p.Name()] = tmplEnt
-    }
-    
-    xlatLoc = make(map[string]string)
-    for _, i := range cfg.Section("locations").Keys() {
-        xlatLoc[i.Name()] = i.String()
-    }
+	webcfg := cfg.Section("webserver")
+	listen := webcfg.Key("listen").MustString(":8099")
+	loadTemplates(webcfg.Key("tmplfiles").MustString("templates/*.tmpl"))
 
-    http.HandleFunc("/", handler)
-    log.Printf("Starting Web Server, %s", listen)
-    log.Fatal(http.ListenAndServe(listen, nil))
+	tmplcfg := cfg.Section("templates")
+	tmplIndex = make(map[string]URLs)
+	for _, p := range tmplcfg.Keys() {
+		tp, err := cfg.GetSection(p.String())
+		if err != nil {
+			continue
+		}
+		tmplEnt := URLs{
+			TmplName: tp.Key("template").String(),
+			Vars:     make(map[string]string),
+		}
+		for _, t := range tp.Keys() {
+			tmplEnt.Vars[t.Name()] = t.String()
+		}
+		tmplIndex[p.Name()] = tmplEnt
+	}
+
+	xlatLoc = make(map[string]string)
+	for _, i := range cfg.Section("locations").Keys() {
+		xlatLoc[i.Name()] = i.String()
+	}
+
+	http.HandleFunc("/", handler)
+	log.Printf("Starting Web Server, %s", listen)
+	log.Fatal(http.ListenAndServe(listen, nil))
 }
 
 // vim: noai:ts=4:sw=4:set expandtab:
