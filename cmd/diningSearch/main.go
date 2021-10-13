@@ -8,7 +8,6 @@ import (
 	"disneydining/internal/timeout"
 	"gopkg.in/ini.v1"
 	"log"
-	"os"
 )
 
 func main() {
@@ -110,6 +109,11 @@ func main() {
 		log.Printf("Saving offers to %s", offersName)
 		offers.SaveOffers(offersName, allOffers)
 	}
+   if cfg.Section("DEFAULT").HasKey("restaurantlist") {
+      listName := cfg.Section("DEFAULT").Key("restaurantlist").String()
+		log.Printf("Saving Restaurants to %s", listName)
+      offers.SaveRestaurants(listName)
+   }
 	timeout.StopTimer()
 }
 

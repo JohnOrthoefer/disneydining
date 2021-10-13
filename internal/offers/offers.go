@@ -17,6 +17,14 @@ type AvailStruct struct {
     Link string
 }
 
+type Restaurant struct {
+    Name string
+    Loc  string
+    Service string
+    ID   int
+    URL  string
+}
+
 type DiningStruct struct {
     Name  string
     Loc   string
@@ -27,6 +35,7 @@ type DiningStruct struct {
 }
 
 type DiningMap map[int]*DiningStruct
+var restaurantList []Restaurant
 var disneyTZ *time.Location
 var disneyToday time.Time
 
@@ -67,6 +76,7 @@ func StringIn(set []string, t string) bool {
 
 func GetOffers(page string) DiningMap  {
     dining := make(DiningMap)
+    restaurantList = nil
 
     // Load the HTML document
     doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))
@@ -99,6 +109,15 @@ func GetOffers(page string) DiningMap  {
             continue
         }
 
+        locType := single.Find("div.metaInfo.metaInfoTablet.availability.availabilityTablet > p").Contents().Text()
+        restaurantList = append(restaurantList, Restaurant {
+            Name:   location,
+            Loc:    (strings.Split(url, "/"))[4],
+            Service:    (strings.TrimSpace(locType)),
+            ID:     idNum,
+            URL:    url,
+        })
+
         t := single.Find("div.groupedOffers.show > span > span > a")
         if t.Length() == 0 {
             continue
@@ -127,6 +146,11 @@ func GetOffers(page string) DiningMap  {
     }
 
    return dining
+}
+
+func SaveRestaurants(n string) {
+    data, _ := json.MarshalIndent(restaurantList, "", " ")
+    ioutil.WriteFile(n, data, 0644)
 }
 
 func SaveOffers(n string, d []DiningMap) {
