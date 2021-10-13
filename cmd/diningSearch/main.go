@@ -30,10 +30,7 @@ func main() {
 	timeout.StartTimer(cfg.Section("DEFAULT").Key("timeout").MustString("10m"))
 
 	// Read the dining file This will get moved to the config file
-	scheduleFile := "dining.ini"
-	if len(os.Args) > 1 {
-		scheduleFile = os.Args[1]
-	}
+	scheduleFile := cfg.Section("DEFAULT").Key("searchfile").MustString("./dining.ini")
 	dining, err := ini.Load(scheduleFile)
 	if err != nil {
 		log.Fatal("Failed to read %s file", scheduleFile)
