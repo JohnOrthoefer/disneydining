@@ -56,6 +56,7 @@ func setSearch(date, meal, size string) {
 		chromedp.SendKeys(`#searchTime-wrapper > div.select-toggle.hoverable`, meal+`\r`, chromedp.ByID),
 		chromedp.SendKeys(`#partySize-wrapper > div.select-toggle.hoverable`, size+`\r`, chromedp.ByID),
 	)
+   time.Sleep(5*time.Second)
 }
 
 func runSearch() {

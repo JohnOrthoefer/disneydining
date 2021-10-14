@@ -1,13 +1,13 @@
-// Command screenshot is a chromedp example demonstrating how to take a
-// screenshot of a specific element and of the entire browser viewport.
 package main
 
 import (
 	"disneydining/internal/mail"
 	"disneydining/internal/offers"
 	"disneydining/internal/timeout"
+	"disneydining/internal/squelch"
 	"gopkg.in/ini.v1"
 	"log"
+   "strconv"
 )
 
 func main() {
@@ -39,6 +39,9 @@ func main() {
 	// get params
 	browser := cfg.Section("browser")
 	disney := cfg.Section("disney")
+
+   squelchOffers := squelch.NewSquelch()
+   squelchOffers.Load("./squlech.json")
 
 	for _, i := range cfg.Section("notify").Keys() {
 		switch i.Name() {
@@ -93,12 +96,20 @@ func main() {
 		for _, offer := range thisOffers {
 			if offers.StringIn(searchLocs, offer.Name) {
 				msg := mail.MakeMsg(offer.Name, offer.URL, offer.Avail)
-				if offers.SameDate(offer.Avail[0].When, searchDate) {
+            seatInt, _ := strconv.Atoi(searchSize)
+				if offers.SameDate(offer.Avail[0].When, searchDate) &&
+               seatInt == offer.Avail[0].Seats {
 					tellWho := s.Key("notify").MustString(defNotify)
 					log.Printf("Found!!! (%s)  %s", tellWho, msg)
-					mail.Notify(tellWho, msg)
+               if !squelchOffers.Mute(msg) {
+                  squelchOffers.Add(msg)
+					   mail.Notify(tellWho, msg)
+               } else {
+                  log.Printf("Squeleched")
+               }
 				} else {
-					log.Printf("Date Mismatch %s  %s", searchDate, msg)
+					log.Printf("Mismatch search:%s for %d  found:%s for %d", searchDate, seatInt, 
+                  offer.Avail[0].When.Format("01/02/2006"), offer.Avail[0].Seats)
 				}
 			}
 		}
@@ -114,6 +125,7 @@ func main() {
 		log.Printf("Saving Restaurants to %s", listName)
       offers.SaveRestaurants(listName)
    }
+   squelchOffers.Save("./squlech.json")
 	timeout.StopTimer()
 }
 
