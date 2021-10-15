@@ -1,178 +1,278 @@
 package offers
 
 import (
-    "github.com/PuerkitoBio/goquery"
-    "log"
-    "strconv"
-    "strings"
-    "time"
-    "encoding/json"
-    "io/ioutil"
-    "regexp"
+	"encoding/json"
+	"github.com/PuerkitoBio/goquery"
+	"io/ioutil"
+	"log"
+	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 )
 
-type AvailStruct struct {
-    When time.Time
-    Seats int
-    Link string
+type Available struct {
+	When    time.Time
+	Service string
+	Seats   int
+	URL     *url.URL
+	Updated time.Time
 }
+type AvailMap []Available
 
 type Restaurant struct {
-    Name string
-    Loc  string
-    Service string
-    ID   int
-    URL  string
+	Name string
+	Loc  string
+	ID   int
+	URL  *url.URL
 }
 
 type DiningStruct struct {
-    Name  string
-    Loc   string
-    Meal  string
-    ID    int
-    URL   string
-    Avail []AvailStruct
+	Location *Restaurant
+	Offers   AvailMap
 }
 
-type DiningMap map[int]*DiningStruct
-var restaurantList []Restaurant
+type DiningMap map[int]DiningStruct
+
 var disneyTZ *time.Location
-var disneyToday time.Time
+
+// get the restaurant name
+func (d DiningStruct) RestaurantName() string {
+	return d.Location.Name
+}
+
+// get the restaurant url
+func (d DiningStruct) RestaurantURL() string {
+	return d.Location.URL.String()
+}
+
+// Get an offer time by index
+func (d DiningStruct) ByIndex(i int) time.Time {
+	return d.Offers[i].When
+}
+
+func (d DiningStruct) FindOfferByTime(t time.Time) int {
+   for i, ent := range d.Offers {
+      if ent.When.Equal(t) { return i }
+   }
+   return -1
+}
+
+// Get seats by index
+func (d DiningStruct) Seats(i int) int {
+	return d.Offers[i].Seats
+}
+
+// Join Dining Map, src with Dining Map dst
+func (dst DiningMap) Join(src DiningMap) DiningMap {
+	for idx, ent := range src {
+		if _, ok := dst[idx]; !ok {
+         log.Printf("Join- %s (id:%d) does not exist in dst", ent.RestaurantName(), idx)
+			// move the whole thing
+			dst[idx] = ent
+			continue
+		}
+		// just move the times
+      v := dst[idx]
+      start := len(v.Offers)
+		for _, tent := range ent.Offers {
+         offset := dst[idx].FindOfferByTime(tent.When)
+         if offset == -1 {
+            v.Offers = append(v.Offers, tent)
+         } else {
+            v.Offers[offset] = tent
+         }
+		}
+      dst[idx] = v
+      log.Printf("Join-  %s (%d) added %d entries", ent.RestaurantName(), idx, (len(v.Offers)-start))
+	}
+   return dst
+}
+
+// get what time it is at disney world NOW
+func disneyToday() time.Time {
+	n := time.Now().In(disneyTZ)
+	return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, disneyTZ)
+}
 
 // checks that a and b are the same date
 func SameDate(a time.Time, b string) bool {
-    w, err := time.ParseInLocation("01/_2/2006", b, disneyTZ)
-    if err != nil {
-        log.Printf("Date Check error %s", err)
-        return false
-    }
-    n := time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, disneyTZ)
-    return w.Equal(n)
+	w, err := time.ParseInLocation("01/_2/2006", b, disneyTZ)
+	if err != nil {
+		log.Printf("Date Check error %s", err)
+		return false
+	}
+	n := time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, disneyTZ)
+	return w.Equal(n)
 }
-   
 
 // Check that string is after today
 func CheckDate(when string) bool {
-    w, err := time.ParseInLocation("01/_2/2006", when, disneyTZ)
-    if err != nil {
-        log.Printf("Date Check error %s", err)
-        return false
-    }
-    n := disneyToday
-    return w.After(n)
+	w, err := time.ParseInLocation("01/_2/2006", when, disneyTZ)
+	if err != nil {
+		log.Printf("Date Check error %s", err)
+		return false
+	}
+	return w.After(disneyToday())
 }
 
+// Match if a any of the substrings, set, appear in string, t.
 func StringIn(set []string, t string) bool {
-    for _, this := range set {
-        this = strings.ToLower(strings.TrimSpace(this))
-        t = strings.TrimSpace(t)
-        t = strings.ToLower(t)
-        if strings.Contains(t, this) {
-            return true
-        }
-    }
-    return false
+	for _, this := range set {
+		this = strings.ToLower(strings.TrimSpace(this))
+		t = strings.TrimSpace(t)
+		t = strings.ToLower(t)
+		if strings.Contains(t, this) {
+			return true
+		}
+	}
+	return false
 }
 
-func GetOffers(page string) DiningMap  {
-    dining := make(DiningMap)
-    restaurantList = nil
-
-    // Load the HTML document
-    doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    sel := doc.Find("div.cardLink.finderCard.hasLink")
-    meal := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
-    meal = meal[30:]
-    meal = meal[:len(meal)-20]
-
-    seatsRE := regexp.MustCompile(`[0-9]+`)
-
-    seatsTxt := doc.Find("#partySize-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
-    log.Printf("seatsTxt: %s; Match: %s", seatsTxt, seatsRE.FindString(seatsTxt))
-    seats, err := strconv.Atoi(seatsRE.FindString(seatsTxt))
-
-    for i := range sel.Nodes {
-        single := sel.Eq(i)
-        location := single.Find("h2.cardName").Contents().Text()
-
-        u := single.Find("a")
-        url, _ := u.Eq(-1).Attr("href")
-        id, _ := u.Eq(-1).Attr("id")
-
-        tId := strings.Split(id, ";")
-        idNum, _ := strconv.Atoi(tId[0])
-        if tId[1] != "entityType=restaurant" {
-            continue
-        }
-
-        locType := single.Find("div.metaInfo.metaInfoTablet.availability.availabilityTablet > p").Contents().Text()
-        restaurantList = append(restaurantList, Restaurant {
-            Name:   location,
-            Loc:    (strings.Split(url, "/"))[4],
-            Service:    (strings.TrimSpace(locType)),
-            ID:     idNum,
-            URL:    url,
-        })
-
-        t := single.Find("div.groupedOffers.show > span > span > a")
-        if t.Length() == 0 {
-            continue
-        }
-
-        if _, ok := dining[idNum]; !ok {
-            dining[idNum] = &DiningStruct{
-                Name: location,
-                ID:   idNum,
-                URL:  url,
-                Meal: meal,
-                Loc:  (strings.Split(url, "/"))[4],
-            }
-        }
-        t.Each(func(i int, s *goquery.Selection) {
-            tempTime, _ := s.Attr("data-servicedatetime")
-            w, _ :=  time.Parse("2006-01-02T15:04:05-07:00", tempTime)
-            tempLink, _ := s.Attr("data-bookinglink")
-            dining[idNum].Avail = append(dining[idNum].Avail,
-            AvailStruct {
-                When: w,
-                Seats: seats,
-                Link: tempLink,
-            })
-        })
-    }
-
-   return dining
+func NewOffers() DiningMap {
+	return make(DiningMap)
 }
 
-func SaveRestaurants(n string) {
-    data, _ := json.MarshalIndent(restaurantList, "", " ")
-    ioutil.WriteFile(n, data, 0644)
+func GetOffers(page string) DiningMap {
+	dining := NewOffers()
+	// When parced should be good enough
+	timeNow := time.Now()
+
+	// Load the HTML document
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// gets the list of "cardLinks"
+	sel := doc.Find("div.cardLink.finderCard.hasLink")
+
+	// find the Meal that the search matched
+	meal := doc.Find("#searchTime-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
+	meal = meal[30:]
+	meal = meal[:len(meal)-20]
+
+	// find how many "seats" the search was for
+	seatsRE := regexp.MustCompile(`[0-9]+`)
+	seatsTxt := doc.Find("#partySize-wrapper > div.select-toggle.hoverable > span > span").Eq(0).Contents().Text()
+	seats, err := strconv.Atoi(seatsRE.FindString(seatsTxt))
+	log.Printf("seatsTxt: %s; Match: %d", seatsTxt, seats)
+
+	// loop though each "cardLink"
+	for i := range sel.Nodes {
+		// get the cursor on the current card
+		single := sel.Eq(i)
+
+		// location: name of the restaurant
+		location := single.Find("h2.cardName").Contents().Text()
+
+		u := single.Find("a").Eq(-1)
+		// url: link to the restaurant page or the default dining link
+		url, err := url.Parse(u.AttrOr("href", "https://disneyworld.disney.go.com/dining/"))
+		if err != nil {
+			log.Printf("URL for %s did not parse", location)
+		}
+
+		// idNum: is unique ID for each location/event
+		id, _ := u.Attr("id")
+		tId := strings.Split(id, ";")
+		idNum, _ := strconv.Atoi(tId[0])
+
+		if tId[1] != "entityType=restaurant" {
+			log.Printf("Skipping %s", tId[1])
+			continue
+		}
+
+		locName := single.Find("div.descriptionLines > span:nth-child(3)").Contents().Text()
+		// idNum should only show up once.
+		v, ok := dining[idNum]
+		if !ok {
+			//log.Printf("%s: href=%s", location, url.Path)
+			t := &Restaurant{
+				Name: location,
+				Loc:  locName,
+				ID:   idNum,
+				URL:  url,
+			}
+			v.Location = t
+			v.Offers = nil
+		} else {
+			log.Printf("Duplicate entries ID: %d, Skipping", idNum)
+			continue
+		}
+
+		// see if there are any offers to poulate
+		t := single.Find("div.groupedOffers.show > span > span > a")
+		if t.Length() == 0 {
+			log.Printf("No offers for %s", location)
+			continue
+		}
+
+		t.Each(func(i int, s *goquery.Selection) {
+			tempTime, _ := s.Attr("data-servicedatetime")
+			w, _ := time.Parse("2006-01-02T15:04:05-07:00", tempTime)
+			tempLink, _ := s.Attr("data-bookinglink")
+			tempURL, _ := url.Parse(tempLink)
+			avail := Available{
+				When:    w,
+				Service: meal,
+				Seats:   seats,
+				URL:     tempURL,
+				Updated: timeNow,
+			}
+			v.Offers = append(v.Offers, avail)
+		})
+		dining[idNum] = v
+	}
+
+	// log.Printf("getOffers: %q", dining)
+	return dining
 }
 
-func SaveOffers(n string, d []DiningMap) {
-    data, _ := json.MarshalIndent(d, "", " ")
-    ioutil.WriteFile(n, data, 0644)
+func (d DiningMap) OfferExists(id int, t time.Time) bool {
+	// does the location exist
+	if _, ok := d[id]; !ok {
+		return false
+	}
+
+	// does the time exist
+	for _, otime := range d[id].Offers {
+		if otime.When.Equal(t) {
+			return true
+		}
+	}
+
+	return false
 }
 
-func LoadOffers(n string) []DiningMap {
-    j, _ := ioutil.ReadFile(n)
-    var rtn []DiningMap
-    json.Unmarshal(j, &rtn)
-    return rtn
+func (d DiningMap) AddOffer(id int, avail Available) bool {
+	// offer already exists
+	if d.OfferExists(id, avail.When) {
+		return false
+	}
+	foo := d[id]
+	foo.Offers = append(foo.Offers, avail)
+	return true
+}
+
+func (d DiningMap) SaveOffers(n string) {
+	//    log.Printf("Saving ... %q", d)
+	data, _ := json.MarshalIndent(d, "", " ")
+	ioutil.WriteFile(n, data, 0644)
+}
+
+func (d DiningMap) LoadOffers(n string) {
+	j, _ := ioutil.ReadFile(n)
+	json.Unmarshal(j, &d)
 }
 
 func init() {
-    tz, err := time.LoadLocation("America/New_York")
-    if err != nil {
-        log.Fatal("Can not load US/Eastern Time Zone")
-    }
-    disneyTZ = tz
-    n := time.Now().In(disneyTZ)
-    disneyToday = time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, disneyTZ)
+	tz, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		log.Fatal("Can not load US/Eastern Time Zone")
+	}
+	disneyTZ = tz
 }
 
-// vim: noai:ts=4:sw=4:set expandtab:
+// vim: noai:ts=3:sw=3:set expandtab:

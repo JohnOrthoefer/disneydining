@@ -62,7 +62,12 @@ func main() {
 	defNotify := dining.Section("DEFAULT").Key("notify").String()
 	//log.Printf("Notify = %s", defNotify)
 
-	var allOffers []offers.DiningMap
+   allOffers:=offers.NewOffers()
+   if cfg.Section("DEFAULT").HasKey("saveoffers") {
+      offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+      allOffers.LoadOffers(offersName)
+      log.Printf("Loaded %d offers from %s", len(allOffers), offersName)
+   }
 
 	for _, s := range dining.Sections() {
 		searchName := s.Name()
@@ -91,14 +96,14 @@ func main() {
 
 		page := GetPage(disney.Key("url").String(), searchDate, searchTime, searchSize)
 		thisOffers := offers.GetOffers(page)
-		allOffers = append(allOffers, thisOffers)
+      allOffers = allOffers.Join(thisOffers)
 		log.Printf("Looking for %q, list of %d", searchLocs, len(thisOffers))
 		for _, offer := range thisOffers {
-			if offers.StringIn(searchLocs, offer.Name) {
-				msg := mail.MakeMsg(offer.Name, offer.URL, offer.Avail)
+			if offers.StringIn(searchLocs, offer.RestaurantName()) {
+				msg := mail.MakeMsg(offer)
             seatInt, _ := strconv.Atoi(searchSize)
-				if offers.SameDate(offer.Avail[0].When, searchDate) &&
-               seatInt == offer.Avail[0].Seats {
+				if offers.SameDate(offer.ByIndex(0), searchDate) &&
+               seatInt == offer.Seats(0) {
 					tellWho := s.Key("notify").MustString(defNotify)
 					log.Printf("Found!!! (%s)  %s", tellWho, msg)
                if !squelchOffers.Mute(msg) {
@@ -109,7 +114,7 @@ func main() {
                }
 				} else {
 					log.Printf("Mismatch search:%s for %d  found:%s for %d", searchDate, seatInt, 
-                  offer.Avail[0].When.Format("01/02/2006"), offer.Avail[0].Seats)
+                  offer.ByIndex(0).Format("01/02/2006"), offer.Seats(0))
 				}
 			}
 		}
@@ -118,13 +123,8 @@ func main() {
 	if cfg.Section("DEFAULT").HasKey("saveoffers") {
 		offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
 		log.Printf("Saving offers to %s", offersName)
-		offers.SaveOffers(offersName, allOffers)
+		allOffers.SaveOffers(offersName)
 	}
-   if cfg.Section("DEFAULT").HasKey("restaurantlist") {
-      listName := cfg.Section("DEFAULT").Key("restaurantlist").String()
-		log.Printf("Saving Restaurants to %s", listName)
-      offers.SaveRestaurants(listName)
-   }
    squelchOffers.Save("./squlech.json")
 	timeout.StopTimer()
 }

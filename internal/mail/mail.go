@@ -33,15 +33,17 @@ func SetToAddr(n, v string) {
    mailStore.to[n] = v
 }
 
-func MakeMsg(loc, u string, when []offers.AvailStruct) string {
-   date := when[0].When.Format("Mon, Jan _2 2006")
+func MakeMsg(dineOpt offers.DiningStruct) string {
    var times []string
+   var date string
 
-   for _, t := range when {
+   for _, t := range dineOpt.Offers {
+      date = t.When.Format("Mon, Jan _2 2006")
       times = append(times, t.When.Format(time.Kitchen))
    }
 
-   return fmt.Sprintf("Found %s on %s @%s.\n%s", loc, date, strings.Join(times, " "), u)
+   return fmt.Sprintf("Found %s on %s @%s.", dineOpt.RestaurantName(), 
+      date, strings.Join(times, " "), dineOpt.RestaurantURL())
 }
 
 func Notify(n, msg string) {
