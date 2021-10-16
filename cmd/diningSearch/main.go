@@ -7,6 +7,7 @@ import (
 	"gopkg.in/ini.v1"
 	"log"
    "strconv"
+   "time"
 )
 
 func main() {
@@ -122,6 +123,29 @@ func main() {
 	   }
    }
 	timeout.StopTimer()
+   if cfg.Section("DEFAULT").HasKey("saveoffers") {
+      log.Printf("Purging old entries")
+      pTime, _ := time.ParseDuration("30m")
+      for i, ent := range allOffers {
+         var newAvail offers.AvailMap
+         start := len(ent.Offers)
+         for _, offer := range ent.Offers {
+            if time.Since(offer.Updated) < pTime {
+               log.Printf("Updates: %s", offer.Updated.String())
+               newAvail = append(newAvail, offer)
+            }
+         }
+         allOffers[i] = offers.DiningStruct{
+            Location: ent.Location,
+            Offers: newAvail,
+         }
+         last := len(ent.Offers)
+         log.Printf( "%s %d - %d - %d", ent.RestaurantName(), start, last, last-start)
+      }
+      offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+      log.Printf("Saving offers to %s", offersName)
+      allOffers.SaveOffers(offersName)
+   }
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

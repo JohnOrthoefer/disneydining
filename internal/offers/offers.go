@@ -3,7 +3,7 @@ package offers
 import (
 	"encoding/json"
 	"github.com/PuerkitoBio/goquery"
-	"io/ioutil"
+	"os"
 	"log"
 	"net/url"
 	"regexp"
@@ -42,11 +42,12 @@ func (d DiningStruct) RestaurantName() string {
 	return d.Location.Name
 }
 
-// get the restaurant url
+// get the restaurant url, the page about the place
 func (d DiningStruct) RestaurantURL() string {
 	return d.Location.URL.String()
 }
 
+// get the restaurant location, park or resort
 func (d DiningStruct) RestaurantLocation() string {
    if len(d.Location.Loc) == 0 {
       return "Unknown"
@@ -63,6 +64,7 @@ func makeDate(a time.Time)time.Time {
    return time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, disneyTZ)
 }
 
+// tells you what dates are currently on file
 func (d DiningStruct) GroupByDate() []time.Time {
    var rtn []time.Time
    tmp := make(map[time.Time]bool)
@@ -345,11 +347,11 @@ func (d DiningMap) AddOffer(id int, avail Available) bool {
 func (d DiningMap) SaveOffers(n string) {
 	//    log.Printf("Saving ... %q", d)
 	data, _ := json.MarshalIndent(d, "", " ")
-	ioutil.WriteFile(n, data, 0644)
+	os.WriteFile(n, data, 0644)
 }
 
 func (d DiningMap) LoadOffers(n string) {
-	j, _ := ioutil.ReadFile(n)
+	j, _ := os.ReadFile(n)
 	json.Unmarshal(j, &d)
 }
 
