@@ -42,8 +42,8 @@ func MakeMsg(dineOpt offers.DiningStruct) string {
       times = append(times, t.When.Format(time.Kitchen))
    }
 
-   return fmt.Sprintf("Found %s on %s @%s.", dineOpt.RestaurantName(), 
-      date, strings.Join(times, " "), dineOpt.RestaurantURL())
+   return fmt.Sprintf("Found %s for %d on %s @%s.\n%s", dineOpt.RestaurantName(), 
+      dineOpt.Seats(0), date, strings.Join(times, " "), dineOpt.RestaurantURL())
 }
 
 func Notify(n, msg string) {

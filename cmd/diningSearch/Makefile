@@ -1,5 +1,5 @@
 SRC= main.go search.go log.go
-INTERNAL=../../internal/offers/offers.go
+INTERNAL=../../internal/offers/offers.go ../../internal/mail/mail.go
 EXE=diningSearch
 #GOLANG=/usr/local/go/bin/go
 GOLANG=/usr/bin/go

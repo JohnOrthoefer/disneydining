@@ -23,7 +23,7 @@ type AvailMap []Available
 
 type Restaurant struct {
 	Name string
-	Loc  string
+	Loc  []string
 	ID   int
 	URL  *url.URL
 }
@@ -57,6 +57,13 @@ func (d DiningStruct) FindOfferByTime(t time.Time) int {
       if ent.When.Equal(t) { return i }
    }
    return -1
+}
+
+func (d DiningStruct)NewOffers(src DiningStruct) bool {
+   for _, ent := range src.Offers {
+      if d.FindOfferByTime(ent.When) < 0 { return true }
+   }
+   return false
 }
 
 // Get seats by index
@@ -134,6 +141,14 @@ func NewOffers() DiningMap {
 	return make(DiningMap)
 }
 
+func splitLocation(s string) []string {
+   k:=strings.Split(s, ",")
+   for i := range k {
+      k[i] = strings.TrimSpace(k[i])
+   }
+   return k
+}
+
 func GetOffers(page string) DiningMap {
 	dining := NewOffers()
 	// When parced should be good enough
@@ -184,7 +199,8 @@ func GetOffers(page string) DiningMap {
 			continue
 		}
 
-		locName := single.Find("div.descriptionLines > span:nth-child(3)").Contents().Text()
+		locName := splitLocation(single.Find("div.descriptionLines > span:nth-child(3)").Contents().Text())
+      
 		// idNum should only show up once.
 		v, ok := dining[idNum]
 		if !ok {

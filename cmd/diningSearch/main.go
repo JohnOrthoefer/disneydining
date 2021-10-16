@@ -4,7 +4,6 @@ import (
 	"disneydining/internal/mail"
 	"disneydining/internal/offers"
 	"disneydining/internal/timeout"
-	"disneydining/internal/squelch"
 	"gopkg.in/ini.v1"
 	"log"
    "strconv"
@@ -39,9 +38,6 @@ func main() {
 	// get params
 	browser := cfg.Section("browser")
 	disney := cfg.Section("disney")
-
-   squelchOffers := squelch.NewSquelch()
-   squelchOffers.Load("./squlech.json")
 
 	for _, i := range cfg.Section("notify").Keys() {
 		switch i.Name() {
@@ -96,9 +92,8 @@ func main() {
 
 		page := GetPage(disney.Key("url").String(), searchDate, searchTime, searchSize)
 		thisOffers := offers.GetOffers(page)
-      allOffers = allOffers.Join(thisOffers)
 		log.Printf("Looking for %q, list of %d", searchLocs, len(thisOffers))
-		for _, offer := range thisOffers {
+		for idx, offer := range thisOffers {
 			if offers.StringIn(searchLocs, offer.RestaurantName()) {
 				msg := mail.MakeMsg(offer)
             seatInt, _ := strconv.Atoi(searchSize)
@@ -106,8 +101,7 @@ func main() {
                seatInt == offer.Seats(0) {
 					tellWho := s.Key("notify").MustString(defNotify)
 					log.Printf("Found!!! (%s)  %s", tellWho, msg)
-               if !squelchOffers.Mute(msg) {
-                  squelchOffers.Add(msg)
+               if allOffers[idx].NewOffers(offer) {
 					   mail.Notify(tellWho, msg)
                } else {
                   log.Printf("Squeleched")
@@ -118,6 +112,8 @@ func main() {
 				}
 			}
 		}
+      // once we've checked for new offers, add this search to the all
+      allOffers = allOffers.Join(thisOffers)
 	}
 
 	if cfg.Section("DEFAULT").HasKey("saveoffers") {
@@ -125,7 +121,6 @@ func main() {
 		log.Printf("Saving offers to %s", offersName)
 		allOffers.SaveOffers(offersName)
 	}
-   squelchOffers.Save("./squlech.json")
 	timeout.StopTimer()
 }
 
