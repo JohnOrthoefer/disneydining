@@ -49,11 +49,11 @@ func (d DiningStruct) RestaurantURL() string {
 }
 
 // get the restaurant location, park or resort
-func (d DiningStruct) RestaurantLocation() string {
-   if len(d.Location.Loc) == 0 {
-      return "Unknown"
+func (d DiningStruct) RestaurantLocation(i int) string {
+   if i > -1 && i < len(d.Location.Loc) {
+      return d.Location.Loc[i]
    }
-   return d.Location.Loc[0]
+   return " "
 }
 
 // Get an offer time by index

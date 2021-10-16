@@ -16,6 +16,7 @@ import (
 
 type Offers struct {
 	Location string
+    Section  string
 	Name     string
 	URL      string
 	Date     string
@@ -77,7 +78,8 @@ func getOffers(s string) ([]byte, error) {
             for _, meal := range offer.MealsByDate(date) {
                 for _, seats := range offer.SeatsByMeal(date, meal) {
                     var t Offers
-	                t.Location = offer.RestaurantLocation()
+	                t.Location = offer.RestaurantLocation(0)
+                    t.Section = offer.RestaurantLocation(1)
 		            t.Name = offer.RestaurantName()
 		            t.URL = offer.RestaurantURL()
 		            t.Date = date.Format("02 Jan 2006")

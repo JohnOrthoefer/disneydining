@@ -25,8 +25,9 @@ $(document).ready(function () {
           r.style.display = collapsed ? 'none' : '';
         });   
         return $('<tr/>')
-          .append( '<td>'+rows.data().pluck('Location')[0]+'</td>')
-          .append( '<td colspan="3"><a href="'+
+          .append('<td>'+rows.data().pluck('Location')[0]+
+            '<br/><i>'+rows.data().pluck('Section')[0]+'</i></td>')
+          .append('<td colspan="3"><a href="'+
               rows.data().pluck('URL')[0]+
               '" target="_blank">'+
               group+
@@ -39,7 +40,13 @@ $(document).ready(function () {
     "columns": [ 
       { "title": "Location",
         "data": ".Location",
-        "orderData": [ 0, 1, 2, 3 ]
+        "orderData": [ 0, 1, 2, 3 ],
+        "render": function (data, type, row) {
+          if (type == 'display' || type == 'filer' ) {
+            return "<b>"+row.Location+"</b><br /><i>"+row.Section+"</i>";
+          }
+          return row.Location;
+        }
       },
       { "title": "Restaurant",
         "data": ".Name",
