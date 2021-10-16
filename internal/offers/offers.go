@@ -138,6 +138,31 @@ func (d DiningStruct)NewOffers(src DiningStruct) bool {
    return false
 }
 
+func (d DiningMap)CountOffers()int {
+   total := 0
+   for _, ent := range d {
+      total += len(ent.Offers)
+   }
+   return total
+}
+
+func (d DiningMap)PurgeOffers(pTime time.Duration) int {
+   cnt := d.CountOffers()
+   for i, ent := range d {
+      var newAvail AvailMap
+      for _, offer := range ent.Offers {
+         if time.Since(offer.Updated) < pTime {
+            newAvail = append(newAvail, offer)
+         }
+      }
+      d[i] = DiningStruct{
+         Location: ent.Location,
+         Offers: newAvail,
+      }
+   }
+   return (cnt - d.CountOffers())
+}
+
 // Get seats by index
 func (d DiningStruct) Seats(i int) int {
 	return d.Offers[i].Seats
