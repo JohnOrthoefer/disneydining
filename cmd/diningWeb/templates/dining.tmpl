@@ -45,7 +45,12 @@ $(document).ready(function () {
       },
       { "title": "Date", 
         "data": ".Date",
-        "orderable": false
+        "orderable": false,
+        "render":
+          function (data, type, row) {
+            if (type == "sort") return row.DateUX;
+            return row.Date;
+          }
       },
       { "title": "Meal", 
         "data": ".Meal",

@@ -21,6 +21,7 @@ type Offers struct {
 	Date     string
 	Meal     string
 	Seats    int
+    DateUX   int64
 	Time     []string
 }
 type URLs struct {
@@ -78,6 +79,7 @@ func getOffers(s string) ([]byte, error) {
 		            t.Name = offer.RestaurantName()
 		            t.URL = offer.RestaurantURL()
 		            t.Date = date.Format("02 Jan 2006")
+                    t.DateUX = date.Unix()
 	        	    t.Meal = meal
 		            t.Seats = seats
 			        t.Time = offer.TimesByMealDate(date, meal, seats)
