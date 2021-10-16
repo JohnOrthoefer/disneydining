@@ -38,19 +38,22 @@ $(document).ready(function () {
     },
     "columns": [ 
       { "title": "Location",
-        "data": ".Location"
+        "data": ".Location",
+        "orderData": [ 0, 1, 2 ]
       },
       { "title": "Restaurant",
-        "data": ".Name"
+        "data": ".Name",
+        "orderData": [ 1, 0, 2 ]
       },
       { "title": "Date", 
         "data": ".Date",
-        "orderable": false,
-        "render":
-          function (data, type, row) {
-            if (type == "sort") return row.DateUX;
+       "orderData": [ 2, 1, 0 ],
+        "render": function (data, type, row) {
+          if ( type == 'display' || type == 'filter' ) {
             return row.Date;
           }
+          return row.DateUX;
+        }
       },
       { "title": "Meal", 
         "data": ".Meal",
