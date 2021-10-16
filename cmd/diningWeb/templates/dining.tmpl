@@ -39,15 +39,15 @@ $(document).ready(function () {
     "columns": [ 
       { "title": "Location",
         "data": ".Location",
-        "orderData": [ 0, 1, 2 ]
+        "orderData": [ 0, 1, 2, 3 ]
       },
       { "title": "Restaurant",
         "data": ".Name",
-        "orderData": [ 1, 0, 2 ]
+        "orderData": [ 1, 0, 2, 3 ]
       },
       { "title": "Date", 
         "data": ".Date",
-       "orderData": [ 2, 1, 0 ],
+       "orderData": [ 2, 1, 0, 3 ],
         "render": function (data, type, row) {
           if ( type == 'display' || type == 'filter' ) {
             return row.Date;
@@ -60,7 +60,10 @@ $(document).ready(function () {
         "orderable": false,
         "render": 
           function (data, type, row) {
-            return row.Meal+"<br/>For "+row.Seats;
+            if ( type == 'display' || type == 'filter' ) {
+              return row.Meal+"<br/>For "+row.Seats;
+            }
+            return row.MealSort;
           }
       },
       { "title": "Times", 

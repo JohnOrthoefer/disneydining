@@ -21,6 +21,7 @@ type Offers struct {
 	Date     string
 	Meal     string
 	Seats    int
+    MealSort int
     DateUX   int64
 	Time     []string
 }
@@ -32,6 +33,7 @@ type URLs struct {
 var tmpls *template.Template
 var tmplIndex map[string]URLs
 var xlatLoc map[string]string
+var mealVal map[string]int
 var offersFile string = "/tmp/dining/offers.json"
 
 func checkError(e error) {
@@ -82,6 +84,7 @@ func getOffers(s string) ([]byte, error) {
                     t.DateUX = date.Unix()
 	        	    t.Meal = meal
 		            t.Seats = seats
+                    t.MealSort = mealVal[meal]+seats
 			        t.Time = offer.TimesByMealDate(date, meal, seats)
 		            tmpData.Data = append(tmpData.Data, t)
                 }
@@ -208,6 +211,14 @@ func main() {
 	http.HandleFunc("/", handler)
 	log.Printf("Starting Web Server, %s", listen)
 	log.Fatal(http.ListenAndServe(listen, nil))
+}
+
+func init() {
+    mealVal = make(map[string]int)
+    mealVal["Breakfast"] = 100
+    mealVal["Brunch"] = 200
+    mealVal["Lunch"] = 300
+    mealVal["Dinner"] = 400
 }
 
 // vim: noai:ts=4:sw=4:set expandtab:
