@@ -114,13 +114,13 @@ func main() {
 		}
       // once we've checked for new offers, add this search to the all
       allOffers = allOffers.Join(thisOffers)
-	}
 
-	if cfg.Section("DEFAULT").HasKey("saveoffers") {
-		offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
-		log.Printf("Saving offers to %s", offersName)
-		allOffers.SaveOffers(offersName)
-	}
+	   if cfg.Section("DEFAULT").HasKey("saveoffers") {
+	   	offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+	   	log.Printf("Saving offers to %s", offersName)
+	   	allOffers.SaveOffers(offersName)
+	   }
+   }
 	timeout.StopTimer()
 }
 

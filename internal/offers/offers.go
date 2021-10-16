@@ -47,21 +47,91 @@ func (d DiningStruct) RestaurantURL() string {
 	return d.Location.URL.String()
 }
 
+func (d DiningStruct) RestaurantLocation() string {
+   if len(d.Location.Loc) == 0 {
+      return "Unknown"
+   }
+   return d.Location.Loc[0]
+}
+
 // Get an offer time by index
 func (d DiningStruct) ByIndex(i int) time.Time {
 	return d.Offers[i].When
 }
 
-func (d DiningStruct) FindOfferByTime(t time.Time) int {
+func makeDate(a time.Time)time.Time {
+   return time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, disneyTZ)
+}
+
+func (d DiningStruct) GroupByDate() []time.Time {
+   var rtn []time.Time
+   tmp := make(map[time.Time]bool)
+
+   for _, ent := range d.Offers {
+      tmp[makeDate(ent.When)] = true
+   }
+
+   for i := range tmp {
+      rtn = append(rtn, i)
+   }
+   return rtn
+}
+
+func (d DiningStruct) MealsByDate(t time.Time) []string {
+   var rtn []string
+   tmp := make(map[string]bool)
+
+   for _, ent := range d.Offers {
+      if makeDate(ent.When).Equal(makeDate(t)) {
+         tmp[ent.Service] = true
+      }
+   }
+
+   for i := range tmp {
+      rtn = append(rtn, i)
+   }
+   return rtn
+}
+
+func (d DiningStruct) SeatsByMeal(t time.Time, meal string) []int {
+   var rtn []int
+   tmp := make(map[int]bool)
+   for _, ent := range d.Offers {
+      if makeDate(ent.When).Equal(makeDate(t)) && ent.Service == meal {
+         tmp[ent.Seats] = true
+      }
+   }
+   for i := range tmp {
+      rtn = append(rtn, i)
+   }
+   return rtn
+}
+
+func (d DiningStruct) TimesByMealDate(t time.Time, meal string, seats int) []string {
+   var rtn []string
+   for _, ent := range d.Offers {
+      if makeDate(ent.When).Equal(makeDate(t)) && 
+         ent.Service == meal && ent.Seats == seats {
+         rtn = append(rtn, ent.When.Format("3:04 PM"))
+      }
+   }
+   return rtn
+}
+
+func (d DiningStruct) FindOfferByTime(t time.Time, seats int) int {
    for i, ent := range d.Offers {
-      if ent.When.Equal(t) { return i }
+      if ent.When.Equal(t) && ent.Seats == seats { 
+         return i
+      }
    }
    return -1
 }
 
 func (d DiningStruct)NewOffers(src DiningStruct) bool {
    for _, ent := range src.Offers {
-      if d.FindOfferByTime(ent.When) < 0 { return true }
+      if d.FindOfferByTime(ent.When, ent.Seats) < 0 {
+         return true
+      }
    }
    return false
 }
@@ -84,7 +154,7 @@ func (dst DiningMap) Join(src DiningMap) DiningMap {
       v := dst[idx]
       start := len(v.Offers)
 		for _, tent := range ent.Offers {
-         offset := dst[idx].FindOfferByTime(tent.When)
+         offset := dst[idx].FindOfferByTime(tent.When, tent.Seats)
          if offset == -1 {
             v.Offers = append(v.Offers, tent)
          } else {

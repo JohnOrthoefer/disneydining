@@ -67,24 +67,24 @@ func getOffers(s string) ([]byte, error) {
 		Data []Offers `json:"data"`
 	}
 
-	j := offers.LoadOffers(s)
-	for _, i := range j {
-		for _, offer := range i {
-			var t Offers
-			t.Location = offer.Loc
-			if v, found := xlatLoc[offer.Loc]; found {
-				t.Location = v
-			}
-			t.Name = offer.Name
-			t.URL = offer.URL
-			t.Date = offer.Avail[0].When.Format("02 Jan 2006")
-			t.Meal = offer.Meal
-			t.Seats = offer.Avail[0].Seats
-			for _, tm := range offer.Avail {
-				t.Time = append(t.Time, tm.When.Format("03:04 PM"))
-			}
-			tmpData.Data = append(tmpData.Data, t)
-		}
+	j := offers.NewOffers()
+    j.LoadOffers(s)
+	for _, offer := range j {
+        for _, date := range offer.GroupByDate() {
+            for _, meal := range offer.MealsByDate(date) {
+                for _, seats := range offer.SeatsByMeal(date, meal) {
+                    var t Offers
+	                t.Location = offer.RestaurantLocation()
+		            t.Name = offer.RestaurantName()
+		            t.URL = offer.RestaurantURL()
+		            t.Date = date.Format("02 Jan 2006")
+	        	    t.Meal = meal
+		            t.Seats = seats
+			        t.Time = offer.TimesByMealDate(date, meal, seats)
+		            tmpData.Data = append(tmpData.Data, t)
+                }
+            }
+        }
 	}
 
 	return json.MarshalIndent(tmpData, "", " ")
