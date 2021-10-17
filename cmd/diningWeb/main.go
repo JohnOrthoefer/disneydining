@@ -25,6 +25,7 @@ type Offers struct {
     MealSort int
     DateUX   int64
 	Time     []string
+    LastUpd  int64
 }
 type URLs struct {
 	TmplName string
@@ -36,6 +37,7 @@ var tmplIndex map[string]URLs
 var xlatLoc map[string]string
 var mealVal map[string]int
 var offersFile string = "/tmp/dining/offers.json"
+var scheduleFile string
 
 func checkError(e error) {
 	if e != nil {
@@ -113,6 +115,33 @@ func offersTimestamp(s string) ([]byte, error) {
 	return json.MarshalIndent(tmpData, "", " ")
 }
 
+func getSearches() ([]byte, error) {
+    type KeyValue map[string]string
+    type Section struct {
+        Name string
+        Key     KeyValue
+    }
+    var tmpData struct {
+        Data []*Section `json:"data"`
+    }
+    
+
+    dining, _ := ini.Load(scheduleFile)
+    for _, section := range dining.Sections() {
+        sec := new(Section)
+        sec.Name = section.Name()
+        sec.Key = make(KeyValue)
+        for _, key := range section.Keys() {
+            kn := key.Name()
+            kv := key.String()
+            sec.Key[kn] = kv
+        }
+        tmpData.Data = append(tmpData.Data, sec)
+    }
+        
+	return json.MarshalIndent(tmpData, "", " ")
+}
+
 func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
 	var j []byte
 	var err error
@@ -122,6 +151,8 @@ func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
 		j, err = getOffers(offersFile)
 	case "update":
 		j, err = offersTimestamp(offersFile)
+    case "search":
+        j, err = getSearches()
 	default:
 		log.Printf("Could not find %s", page)
 		return
@@ -183,6 +214,7 @@ func main() {
 	displayBuildInfo()
 
 	offersFile = iniDefaults.Key("saveoffers").MustString(offersFile)
+	scheduleFile = cfg.Section("DEFAULT").Key("searchfile").MustString("./dining.ini")
 
 	webcfg := cfg.Section("webserver")
 	listen := webcfg.Key("listen").MustString(":8099")

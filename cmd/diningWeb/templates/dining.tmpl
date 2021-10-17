@@ -43,14 +43,24 @@ $(document).ready(function () {
         "orderData": [ 0, 1, 2, 3 ],
         "render": function (data, type, row) {
           if (type == 'display' || type == 'filer' ) {
-            return "<b>"+row.Location+"</b><br /><i>"+row.Section+"</i>";
+            return " ";
+            //return row.Location;
+            //return "<b>"+row.Location+"</b><br /><i>"+row.Section+"</i>";
           }
           return row.Location;
         }
       },
       { "title": "Restaurant",
         "data": ".Name",
-        "orderData": [ 1, 0, 2, 3 ]
+        "orderData": [ 1, 0, 2, 3 ],
+        "render": function (data, type, row) {
+          if (type == 'display' || type == 'filer' ) {
+            return " ";
+            //return row.Location;
+            //return "<b>"+row.Location+"</b><br /><i>"+row.Section+"</i>";
+          }
+          return row.Name;
+        }
       },
       { "title": "Date", 
         "data": ".Date",
@@ -106,7 +116,7 @@ $(document).ready(function () {
 });
 </script> 
 
-<h3>Last updated: <span id="Updated-Offers"></span></h3>
+<h3>Last updated: <small class="text-muted"><span id="Updated-Offers"></span></small></h3>
 
 <table id="dining" class="table" style="width:90%">
   <thead>
