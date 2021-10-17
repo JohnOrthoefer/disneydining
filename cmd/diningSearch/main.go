@@ -6,11 +6,9 @@ import (
 	"disneydining/internal/timeout"
 	"gopkg.in/ini.v1"
 	"log"
-   "strconv"
-   "time"
+	"strconv"
+	"time"
 )
-
-
 
 func main() {
 	// Read the config file
@@ -61,12 +59,12 @@ func main() {
 	defNotify := dining.Section("DEFAULT").Key("notify").String()
 	//log.Printf("Notify = %s", defNotify)
 
-   allOffers:=offers.NewOffers()
-   if cfg.Section("DEFAULT").HasKey("saveoffers") {
-      offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
-      allOffers.LoadOffers(offersName)
-      log.Printf("Loaded %d offers at %d locations from %s", allOffers.CountOffers(), len(allOffers), offersName)
-   }
+	allOffers := offers.NewOffers()
+	if cfg.Section("DEFAULT").HasKey("saveoffers") {
+		offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+		allOffers.LoadOffers(offersName)
+		log.Printf("Loaded %d offers at %d locations from %s", allOffers.CountOffers(), len(allOffers), offersName)
+	}
 
 	for _, s := range dining.Sections() {
 		searchName := s.Name()
@@ -99,40 +97,40 @@ func main() {
 		for idx, offer := range thisOffers {
 			if offers.StringIn(searchLocs, offer.RestaurantName()) {
 				msg := mail.MakeMsg(offer)
-            seatInt, _ := strconv.Atoi(searchSize)
+				seatInt, _ := strconv.Atoi(searchSize)
 				if offers.SameDate(offer.ByIndex(0), searchDate) &&
-               seatInt == offer.Seats(0) {
+					seatInt == offer.Seats(0) {
 					tellWho := s.Key("notify").MustString(defNotify)
 					log.Printf("Found!!! (%s)  %s", tellWho, msg)
-               if allOffers[idx].NewOffers(offer) {
-					   mail.Notify(tellWho, msg)
-               } else {
-                  log.Printf("Squeleched")
-               }
+					if allOffers[idx].NewOffers(offer) {
+						mail.Notify(tellWho, msg)
+					} else {
+						log.Printf("Squeleched")
+					}
 				} else {
-					log.Printf("Mismatch search:%s for %d  found:%s for %d", searchDate, seatInt, 
-                  offer.ByIndex(0).Format("01/02/2006"), offer.Seats(0))
+					log.Printf("Mismatch search:%s for %d  found:%s for %d", searchDate, seatInt,
+						offer.ByIndex(0).Format("01/02/2006"), offer.Seats(0))
 				}
 			}
 		}
-      // once we've checked for new offers, add this search to the all
-      allOffers = allOffers.Join(thisOffers)
+		// once we've checked for new offers, add this search to the all
+		allOffers = allOffers.Join(thisOffers)
 
-	   if cfg.Section("DEFAULT").HasKey("saveoffers") {
-	   	offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
-	   	log.Printf("Saving offers to %s", offersName)
-	   	allOffers.SaveOffers(offersName)
-	   }
-   }
+		if cfg.Section("DEFAULT").HasKey("saveoffers") {
+			offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+			log.Printf("Saving offers to %s", offersName)
+			allOffers.SaveOffers(offersName)
+		}
+	}
 	timeout.StopTimer()
-   if cfg.Section("DEFAULT").HasKey("saveoffers") {
-      retention, _ := time.ParseDuration("30m")
-      log.Printf("Purged %d old entries",
-         allOffers.PurgeOffers(cfg.Section("DEFAULT").Key("offerretention").MustDuration(retention)))
-      offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
-      log.Printf("Saving offers %d at %d locations to %s", allOffers.CountOffers(), len(allOffers), offersName)
-      allOffers.SaveOffers(offersName)
-   }
+	if cfg.Section("DEFAULT").HasKey("saveoffers") {
+		retention, _ := time.ParseDuration("30m")
+		log.Printf("Purged %d old entries",
+			allOffers.PurgeOffers(cfg.Section("DEFAULT").Key("offerretention").MustDuration(retention)))
+		offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+		log.Printf("Saving offers %d at %d locations to %s", allOffers.CountOffers(), len(allOffers), offersName)
+		allOffers.SaveOffers(offersName)
+	}
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

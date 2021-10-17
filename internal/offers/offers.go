@@ -112,20 +112,18 @@ func (d DiningStruct) SeatsByMeal(t time.Time, meal string) []int {
 
 func (d DiningStruct) TimesByMealDate(t time.Time, meal string, seats int) []string {
    var rtn []string
-   var tmp []time.Time
+
+   sort.Slice(d.Offers, func(i, j int) bool {
+      return d.Offers[i].When.Before(d.Offers[j].When)
+   })
 
    for _, ent := range d.Offers {
       if makeDate(ent.When).Equal(makeDate(t)) && 
          ent.Service == meal && ent.Seats == seats {
-         tmp = append(tmp, ent.When)
+         rtn = append(rtn, ent.When.Format("3:04 PM"))
       }
    }
 
-   sort.Slice(tmp, func(i, j int) bool {
-      return tmp[i].Before(tmp[j])})
-   for _, ent := range tmp {
-      rtn = append(rtn, ent.Format("3:04 PM"))
-   }
    return rtn
 }
 

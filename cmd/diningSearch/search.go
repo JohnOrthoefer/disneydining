@@ -52,7 +52,7 @@ func wait(w string) {
 func setSearch(date, meal, size string) {
 	log.Printf("Setting Search")
 	chromedp.Run(CTX, chromedp.SetValue(`#diningAvailabilityForm-searchDate`, date, chromedp.ByID))
-   chromedp.Run(CTX, chromedp.SendKeys(`#searchTime-wrapper > div.select-toggle.hoverable`, meal+`\r`, chromedp.ByID))
+	chromedp.Run(CTX, chromedp.SendKeys(`#searchTime-wrapper > div.select-toggle.hoverable`, meal+`\r`, chromedp.ByID))
 	chromedp.Run(CTX, chromedp.SendKeys(`#partySize-wrapper > div.select-toggle.hoverable`, size+`\r`, chromedp.ByID))
 }
 
