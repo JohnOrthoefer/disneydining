@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/PuerkitoBio/goquery"
 	"os"
+   "fmt"
 	"log"
 	"net/url"
 	"regexp"
@@ -112,6 +113,9 @@ func (d DiningStruct) SeatsByMeal(t time.Time, meal string) []int {
 
 func (d DiningStruct) TimesByMealDate(t time.Time, meal string, seats int) []string {
    var rtn []string
+   
+   warningDuration, _ := time.ParseDuration("10m")
+   dangerDuration, _  := time.ParseDuration("20m")
 
    sort.Slice(d.Offers, func(i, j int) bool {
       return d.Offers[i].When.Before(d.Offers[j].When)
@@ -120,7 +124,16 @@ func (d DiningStruct) TimesByMealDate(t time.Time, meal string, seats int) []str
    for _, ent := range d.Offers {
       if makeDate(ent.When).Equal(makeDate(t)) && 
          ent.Service == meal && ent.Seats == seats {
-         rtn = append(rtn, ent.When.Format("3:04 PM"))
+         alert := "success"
+         if time.Since(ent.Updated) > warningDuration {
+            alert = "warning"
+         }
+         if time.Since(ent.Updated) > dangerDuration {
+            alert = "danger"
+         }
+         rtn = append(rtn, 
+            fmt.Sprintf("<span class=\"text-%s\">%s</span>", 
+            alert, ent.When.Format("3:04 PM")))
       }
    }
 
