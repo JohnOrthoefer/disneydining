@@ -59,7 +59,7 @@ $(document).ready(function () {
             //return row.Location;
             //return "<b>"+row.Location+"</b><br /><i>"+row.Section+"</i>";
           }
-          return row.Name;
+          return row.Name.replace('The ','');
         }
       },
       { "title": "Date", 
