@@ -1,0 +1,191 @@
+{{ template "header" . }}
+
+<script type="text/javascript" class="init">
+
+function sort_unique(arr) {
+  if (arr.length === 0) return arr;
+  arr = arr.sort();
+  var ret = [arr[0]];
+  for (var i = 1; i < arr.length; i++) { //Start loop at 1: arr[0] can never be a duplicate
+    if (arr[i-1] !== arr[i]) {
+      ret.push(arr[i]);
+    }
+  }
+  return ret;
+}
+
+function prepend(value, array) {
+  var newArray = array.slice();
+  newArray.unshift(value);
+  return newArray;
+}
+
+function selectDate(val) {
+  console.log(val.options[val.selectedIndex].value);
+  $('#dining').DataTable().draw(false);
+}
+
+$(document).ready(function () {
+  var collapsedGroups = {};
+  var lastUpdate = 0;
+
+  $.fn.dataTable.ext.search.push(
+    function( settings, data, dataIndex) {
+      var dateVal = ((typeof $('#selectDate').val()) == 'undefined')? 
+        'All':
+        $('#selectDate').val();
+      console.log(dateVal);
+      if ( (dateVal == 'All') || 
+           (dateVal == data[2]) ) {
+        return true;
+      }
+      return false;
+    }
+  ); 
+  $('#dining').DataTable({
+    "pageLength": 50,
+    "scrollY":    "70vh",
+    "scrollCollapse": true,
+    "paging": false,
+    "order": [[1, "asc"], [0, "asc"], [2, "asc"]],
+    "ajax": {
+      "url": '?api=offers.json',
+      "cache": true
+    },
+    "fnInitComplete": function(oSettings, json) {
+	    console.log(json)
+	    let result = json.data.map( a => a.Date);
+    	let dates = prepend( "All", sort_unique(result));
+	    var select = document.createElement("select");
+	    select.name = "selectDate";
+	    select.id = "selectDate";
+      select.setAttribute("onchange", "selectDate(this)");
+	    for (const val of dates) {
+	      var option = document.createElement("option");
+        option.value = val;
+        option.text = val;
+        select.appendChild(option);
+      }
+	    document.getElementById("dateList").appendChild(select);
+    },
+    "rowGroup": {
+      dataSrc: ["Name"],
+      startRender: function (rows, group) {
+        var collapsed = !collapsedGroups[group];
+
+        rows.nodes().each(function (r) {
+          r.style.display = collapsed ? 'none' : '';
+        });   
+        return $('<tr/>')
+          .append('<td>'+rows.data().pluck('Location')[0]+
+            '<br/><i>'+rows.data().pluck('Section')[0]+'</i></td>')
+          .append('<td colspan="3"><a href="'+
+              rows.data().pluck('URL')[0]+
+              '" target="_blank">'+
+              group+
+              '</a><td>'+maybePluralize(rows.count(), 'Offer')+
+              '</td>')
+          .attr('data-name', group)
+          .toggleClass('collapsed', collapsed);
+      }
+    },
+    "columns": [ 
+      { "title": "Location",
+        "data": ".Location",
+        "orderData": [ 0, 1, 2, 3 ],
+        "render": function (data, type, row) {
+          if (type == 'display' || type == 'filer' ) {
+            return " ";
+            //return row.Location;
+            //return "<b>"+row.Location+"</b><br /><i>"+row.Section+"</i>";
+          }
+          return row.Location;
+        }
+      },
+      { "title": "Restaurant",
+        "data": ".Name",
+        "orderData": [ 1, 0, 2, 3 ],
+        "render": function (data, type, row) {
+          if (type == 'display' || type == 'filer' ) {
+            return " ";
+            //return row.Location;
+            //return "<b>"+row.Location+"</b><br /><i>"+row.Section+"</i>";
+          }
+          return row.Name.replace('The ','');
+        }
+      },
+      { "title": "Date", 
+        "data": ".Date",
+       "orderData": [ 2, 1, 0, 3 ],
+        "render": function (data, type, row) {
+          if ( type == 'display' || type == 'filter' ) {
+            return row.Date;
+          }
+          return row.DateUX;
+        }
+      },
+      { "title": "Meal", 
+        "data": ".Meal",
+        "orderable": false,
+        "render": 
+          function (data, type, row) {
+            if ( type == 'display' || type == 'filter' ) {
+              return row.Meal+"<br/>For "+row.Seats;
+            }
+            return row.MealSort;
+          }
+      },
+      { "title": "Times", 
+        "data": ".Time",
+        "orderable": false,
+        "render": 
+          function (data, type, row) { 
+            return data.join("<br />");
+          }
+      }
+    ]
+  });
+  $('#dining tbody').on('click', 'tr.dtrg-start', function () {
+    var name = $(this).data('name');
+    collapsedGroups[name] = !collapsedGroups[name];
+    $('#dining').DataTable().draw(false);
+  });  
+
+  $.getJSON('?api=update', (data) => {
+      lastUpdate = data.OffersTime;
+      $('#Updated-Offers').text(new Date(lastUpdate*1000).toString());
+  });
+
+  setInterval( function() {
+    $.getJSON('?api=update', (data) => {
+      if (lastUpdate < data.OffersTime) {
+        lastUpdate = data.OffersTime;
+        $('#Updated-Offers').text(new Date(lastUpdate*1000).toString());
+        $('#dining').DataTable().ajax.reload(); 
+      }
+    })
+  }, 30000);
+});
+</script> 
+
+
+<h4>Dining Avaliable</h4>
+<div id="dateList"><b>Date: </b></div>
+
+<table id="dining" class="table" style="width:90%">
+  <thead>
+    <tr>
+      <th>Location</th>
+      <th>Restaurant</th>
+      <th>Date</th>
+      <th>Meal</th>
+      <th>Times</th>
+    </tr>
+  </thead>
+</table>
+
+<h6>Last updated: <small class="text-muted"><span id="Updated-Offers"></span></small></h3><br />
+
+{{ template "footer" . }}
+<!-- vim: noai:ts=2:sw=2:set expandtab: -->
+
