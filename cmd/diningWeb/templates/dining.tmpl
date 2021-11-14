@@ -20,10 +20,28 @@ function prepend(value, array) {
   return newArray;
 }
 
+function selectDate(val) {
+  console.log(val.options[val.selectedIndex].value);
+  $('#dining').DataTable().draw(false);
+}
+
 $(document).ready(function () {
   var collapsedGroups = {};
   var lastUpdate = 0;
 
+  $.fn.dataTable.ext.search.push(
+    function( settings, data, dataIndex) {
+      var dateVal = ((typeof $('#selectDate').val()) == 'undefined')? 
+        'All':
+        $('#selectDate').val();
+      console.log(dateVal);
+      if ( (dateVal == 'All') || 
+           (dateVal == data[2]) ) {
+        return true;
+      }
+      return false;
+    }
+  ); 
   $('#dining').DataTable({
     "pageLength": 50,
     "scrollY":    "70vh",
@@ -35,19 +53,20 @@ $(document).ready(function () {
       "cache": true
     },
     "fnInitComplete": function(oSettings, json) {
-	console.log(json)
-	let result = json.data.map( a => a.Date);
-	let dates = prepend( "All", sort_unique(result));
-	var select = document.createElement("select");
-	select.name = "selectDate";
-	select.id = "selectDate";
-	for (const val of dates) {
-	   var option = document.createElement("option");
-	   option.value = val;
-           option.text = val;
-           select.appendChild(option);
-        }
-	document.getElementById("dateList").appendChild(select);
+	    console.log(json)
+	    let result = json.data.map( a => a.Date);
+    	let dates = prepend( "All", sort_unique(result));
+	    var select = document.createElement("select");
+	    select.name = "selectDate";
+	    select.id = "selectDate";
+      select.setAttribute("onchange", "selectDate(this)");
+	    for (const val of dates) {
+	      var option = document.createElement("option");
+        option.value = val;
+        option.text = val;
+        select.appendChild(option);
+      }
+	    document.getElementById("dateList").appendChild(select);
     },
     "rowGroup": {
       dataSrc: ["Name"],
