@@ -2,6 +2,24 @@
 
 <script type="text/javascript" class="init">
 
+function sort_unique(arr) {
+  if (arr.length === 0) return arr;
+  arr = arr.sort();
+  var ret = [arr[0]];
+  for (var i = 1; i < arr.length; i++) { //Start loop at 1: arr[0] can never be a duplicate
+    if (arr[i-1] !== arr[i]) {
+      ret.push(arr[i]);
+    }
+  }
+  return ret;
+}
+
+function prepend(value, array) {
+  var newArray = array.slice();
+  newArray.unshift(value);
+  return newArray;
+}
+
 $(document).ready(function () {
   var collapsedGroups = {};
   var lastUpdate = 0;
@@ -15,6 +33,21 @@ $(document).ready(function () {
     "ajax": {
       "url": '?api=offers.json',
       "cache": true
+    },
+    "fnInitComplete": function(oSettings, json) {
+	console.log(json)
+	let result = json.data.map( a => a.Date);
+	let dates = prepend( "All", sort_unique(result));
+	var select = document.createElement("select");
+	select.name = "selectDate";
+	select.id = "selectDate";
+	for (const val of dates) {
+	   var option = document.createElement("option");
+	   option.value = val;
+           option.text = val;
+           select.appendChild(option);
+        }
+	document.getElementById("dateList").appendChild(select);
     },
     "rowGroup": {
       dataSrc: ["Name"],
@@ -116,7 +149,9 @@ $(document).ready(function () {
 });
 </script> 
 
-<h3>Last updated: <small class="text-muted"><span id="Updated-Offers"></span></small></h3>
+<h3>Last updated: <small class="text-muted"><span id="Updated-Offers"></span></small></h3><br />
+
+<div id="dateList"></div>
 
 <table id="dining" class="table" style="width:90%">
   <thead>
