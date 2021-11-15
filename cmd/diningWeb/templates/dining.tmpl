@@ -21,7 +21,12 @@ function prepend(value, array) {
 }
 
 function selectDate(val) {
-  console.log(val.options[val.selectedIndex].value);
+  console.log(val);
+  document.getElementById('dateBtn').innerHTML='Date';
+  if (val !== 'All') {
+    document.getElementById('dateBtn').innerHTML=val;
+  }
+  document.getElementById('selectDate').value=val;
   $('#dining').DataTable().draw(false);
 }
 
@@ -56,28 +61,20 @@ $(document).ready(function () {
 	    console.log(json)
 	    let result = json.data.map( a => a.Date);
     	let dates = prepend( "All", sort_unique(result));
-	    var btn = document.createElement("button");
-	    btn.id = "selectDate";
-      btn.setAttribute("onchange", "selectDate(this)");
-      btn.setAttribute("type", "button");
-      btn.setAttribute("class", "btn btn-primary dropdown-toggle");
-      btn.setAttribute("data-bs-toggle", "dropdown");
-      btn.setAttribute("aria-expanded", "false");
-      btn.innerHTML = "Date";
-      var ul = document.createElement("ul");
-      ul.setAttribute("class", "dropdown-menu");
-      ul.setAttribute("aria-labelledby", "selectDate");
+      var ulList = document.getElementById("dateList");
+      while (ulList.firstChild) {
+        ulList.removeChild(ulList.firstChild);
+      }
 	    for (const val of dates) {
 	      var option = document.createElement("li");
         var link = document.createElement("a");
         link.innerHTML = val;
         link.setAttribute("class", "dropdown-item");
         link.setAttribute("href", "#");
+        link.setAttribute("onclick", "selectDate($(this).text())");
         option.appendChild(link);
-        ul.appendChild(option);
+        ulList.appendChild(option);
       }
-	    document.getElementById("dateList").appendChild(btn);
-	    document.getElementById("dateList").appendChild(ul);
     },
     "rowGroup": {
       dataSrc: ["Name"],
@@ -181,7 +178,13 @@ $(document).ready(function () {
 
 <h3>Last updated: <small class="text-muted"><span id="Updated-Offers"></span></small></h3><br />
 
-<div id="dateList" class="dropdown"></div>
+<div class="dropdown">
+  <button id="dateBtn" type='button' class='btn btn-primary dropdown-toggle' data-bs-toggle='dropdown' aria-expanded='false'>Date</button>
+  <ul class='dropdown-menu' id='dateList'>
+  </ul>
+</div>
+
+<input type='hidden' id='selectDate' value='All'>
 
 <table id="dining" class="table" style="width:90%">
   <thead>
