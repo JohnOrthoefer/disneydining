@@ -56,17 +56,28 @@ $(document).ready(function () {
 	    console.log(json)
 	    let result = json.data.map( a => a.Date);
     	let dates = prepend( "All", sort_unique(result));
-	    var select = document.createElement("select");
-	    select.name = "selectDate";
-	    select.id = "selectDate";
-      select.setAttribute("onchange", "selectDate(this)");
+	    var btn = document.createElement("button");
+	    btn.id = "selectDate";
+      btn.setAttribute("onchange", "selectDate(this)");
+      btn.setAttribute("type", "button");
+      btn.setAttribute("class", "btn btn-primary dropdown-toggle");
+      btn.setAttribute("data-bs-toggle", "dropdown");
+      btn.setAttribute("aria-expanded", "false");
+      btn.innerHTML = "Date";
+      var ul = document.createElement("ul");
+      ul.setAttribute("class", "dropdown-menu");
+      ul.setAttribute("aria-labelledby", "selectDate");
 	    for (const val of dates) {
-	      var option = document.createElement("option");
-        option.value = val;
-        option.text = val;
-        select.appendChild(option);
+	      var option = document.createElement("li");
+        var link = document.createElement("a");
+        link.innerHTML = val;
+        link.setAttribute("class", "dropdown-item");
+        link.setAttribute("href", "#");
+        option.appendChild(link);
+        ul.appendChild(option);
       }
-	    document.getElementById("dateList").appendChild(select);
+	    document.getElementById("dateList").appendChild(btn);
+	    document.getElementById("dateList").appendChild(ul);
     },
     "rowGroup": {
       dataSrc: ["Name"],
@@ -170,7 +181,7 @@ $(document).ready(function () {
 
 <h3>Last updated: <small class="text-muted"><span id="Updated-Offers"></span></small></h3><br />
 
-<div id="dateList"></div>
+<div id="dateList" class="dropdown"></div>
 
 <table id="dining" class="table" style="width:90%">
   <thead>
