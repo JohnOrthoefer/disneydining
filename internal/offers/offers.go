@@ -39,6 +39,10 @@ type DiningMap map[int]DiningStruct
 
 var disneyTZ *time.Location
 
+const (
+   adrDays = 60
+)
+
 // get the restaurant name
 func (d DiningStruct) RestaurantName() string {
 	return d.Location.Name
@@ -222,7 +226,7 @@ func disneyToday() time.Time {
 
 // checks that a and b are the same date
 func SameDate(a time.Time, b string) bool {
-	w, err := time.ParseInLocation("01/_2/2006", b, disneyTZ)
+	w, err := time.ParseInLocation("_1/_2/2006", b, disneyTZ)
 	if err != nil {
 		log.Printf("Date Check error %s", err)
 		return false
@@ -233,12 +237,14 @@ func SameDate(a time.Time, b string) bool {
 
 // Check that string is after today
 func CheckDate(when string) bool {
-	w, err := time.ParseInLocation("01/_2/2006", when, disneyTZ)
+	w, err := time.ParseInLocation("_1/_2/2006", when, disneyTZ)
 	if err != nil {
 		log.Printf("Date Check error %s", err)
 		return false
 	}
-	return w.After(disneyToday())
+
+	return w.After(disneyToday()) && 
+      w.Before(disneyToday().AddDate(0,0,adrDays))
 }
 
 // Match if a any of the substrings, set, appear in string, t.
@@ -406,6 +412,9 @@ func init() {
 		log.Fatal("Can not load US/Eastern Time Zone")
 	}
 	disneyTZ = tz
+   log.Printf("Dining Window after %s, and before %s\n", 
+      disneyToday().Format("02 Jan 06"), 
+      disneyToday().AddDate(0,0,adrDays).Format("02 Jan 06"))
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:
