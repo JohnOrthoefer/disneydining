@@ -50,7 +50,7 @@ func wait(w string) {
 }
 
 func setSearch(date, meal, size string) {
-	log.Printf("Setting Search")
+	log.Printf("Setting Search date=%s meal=%s size=%s", date, meal, size)
 	chromedp.Run(CTX, chromedp.SetValue(`#diningAvailabilityForm-searchDate`, date, chromedp.ByID))
 	chromedp.Run(CTX, chromedp.SendKeys(`#searchTime-wrapper > div.select-toggle.hoverable`, meal+`\r`, chromedp.ByID))
 	chromedp.Run(CTX, chromedp.SendKeys(`#partySize-wrapper > div.select-toggle.hoverable`, size+`\r`, chromedp.ByID))
@@ -80,7 +80,7 @@ func runSearch() {
 	}
 }
 
-func GetPage(u, d, t, p string) string {
+func GetPage(u string, d time.Time, t string, p string) string {
 	var res string
 
 	if CTX == nil {
@@ -88,7 +88,7 @@ func GetPage(u, d, t, p string) string {
 	}
 	navigate(u)
 	wait("#pageContainer > div.pepGlobalFooter")
-	setSearch(d, t, p)
+	setSearch(d.Format("01/02/2006"), t, p)
 	runSearch()
 
 	chromedp.Run(CTX,
