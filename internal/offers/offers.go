@@ -226,7 +226,7 @@ func disneyToday() time.Time {
 
 // checks that a and b are the same date
 func SameDate(a time.Time, b string) bool {
-	w, err := time.ParseInLocation("_1/_2/2006", b, disneyTZ)
+	w, err := time.ParseInLocation("_2 Jan 2006", b, disneyTZ)
 	if err != nil {
 		log.Printf("Date Check error %s", err)
 		return false
@@ -237,7 +237,7 @@ func SameDate(a time.Time, b string) bool {
 
 // Check that string is after today
 func CheckDate(when string) bool {
-	w, err := time.ParseInLocation("_1/_2/2006", when, disneyTZ)
+	w, err := time.ParseInLocation("_2 Jan 2006", when, disneyTZ)
 	if err != nil {
 		log.Printf("Date Check error %s", err)
 		return false
