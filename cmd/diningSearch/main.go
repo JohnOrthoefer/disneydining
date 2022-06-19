@@ -92,7 +92,7 @@ func main() {
 		}
 
 		page := GetPage(disney.Key("url").String(), offers.NormalizeDate(searchDate), searchTime, searchSize)
-		thisOffers := offers.GetOffers(page)
+		thisOffers := offers.GetOffersHTML(page)
 		log.Printf("Looking for %q, list of %d", searchLocs, len(thisOffers))
 		for idx, offer := range thisOffers {
 			if offers.StringIn(searchLocs, offer.RestaurantName()) {
