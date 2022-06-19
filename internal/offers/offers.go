@@ -1,9 +1,7 @@
 package offers
 
 import (
-	"encoding/json"
 	"github.com/PuerkitoBio/goquery"
-	"os"
    "fmt"
 	"log"
 	"net/url"
@@ -13,29 +11,6 @@ import (
    "sort"
 	"time"
 )
-
-type Available struct {
-	When    time.Time
-	Service string
-	Seats   int
-	URL     *url.URL
-	Updated time.Time
-}
-type AvailMap []Available
-
-type Restaurant struct {
-	Name string
-	Loc  []string
-	ID   int
-	URL  *url.URL
-}
-
-type DiningStruct struct {
-	Location *Restaurant
-	Offers   AvailMap
-}
-
-type DiningMap map[int]DiningStruct
 
 var disneyTZ *time.Location
 
@@ -64,10 +39,6 @@ func (d DiningStruct) RestaurantLocation(i int) string {
 // Get an offer time by index
 func (d DiningStruct) ByIndex(i int) time.Time {
 	return d.Offers[i].When
-}
-
-func makeDate(a time.Time)time.Time {
-   return time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, disneyTZ)
 }
 
 // tells you what dates are currently on file
@@ -192,74 +163,6 @@ func (d DiningStruct) Seats(i int) int {
 	return d.Offers[i].Seats
 }
 
-// Join Dining Map, src with Dining Map dst
-func (dst DiningMap) Join(src DiningMap) DiningMap {
-	for idx, ent := range src {
-		if _, ok := dst[idx]; !ok {
-         log.Printf("Join- %s (id:%d) does not exist in dst", ent.RestaurantName(), idx)
-			// move the whole thing
-			dst[idx] = ent
-			continue
-		}
-		// just move the times
-      v := dst[idx]
-      start := len(v.Offers)
-		for _, tent := range ent.Offers {
-         offset := dst[idx].FindOfferByTime(tent.When, tent.Seats)
-         if offset == -1 {
-            v.Offers = append(v.Offers, tent)
-         } else {
-            v.Offers[offset] = tent
-         }
-		}
-      dst[idx] = v
-      log.Printf("Join-  %s (%d) added %d entries", ent.RestaurantName(), idx, (len(v.Offers)-start))
-	}
-   return dst
-}
-
-// get what time it is at disney world NOW
-func disneyToday() time.Time {
-	n := time.Now().In(disneyTZ)
-	return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, disneyTZ)
-}
-
-// checks that a and b are the same date
-func SameDate(a time.Time, b string) bool {
-	w, err := time.ParseInLocation("_2 Jan 2006", b, disneyTZ)
-	if err != nil {
-		log.Printf("Date Check error %s", err)
-		return false
-	}
-	n := time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, disneyTZ)
-	return w.Equal(n)
-}
-
-// Check that string is after today
-func CheckDate(when string) bool {
-	w, err := time.ParseInLocation("_2 Jan 2006", when, disneyTZ)
-	if err != nil {
-		log.Printf("Date Check error %s", err)
-		return false
-	}
-
-	return w.After(disneyToday()) && 
-      w.Before(disneyToday().AddDate(0,0,adrDays))
-}
-
-// Match if a any of the substrings, set, appear in string, t.
-func StringIn(set []string, t string) bool {
-	for _, this := range set {
-		this = strings.ToLower(strings.TrimSpace(this))
-		t = strings.TrimSpace(t)
-		t = strings.ToLower(t)
-		if strings.Contains(t, this) {
-			return true
-		}
-	}
-	return false
-}
-
 func NewOffers() DiningMap {
 	return make(DiningMap)
 }
@@ -350,6 +253,7 @@ func GetOffers(page string) DiningMap {
 
 		t.Each(func(i int, s *goquery.Selection) {
 			tempTime, _ := s.Attr("data-servicedatetime")
+         log.Printf("ServciceDateTime = %s\n", tempTime)
 			w, _ := time.Parse("2006-01-02T15:04:05-07:00", tempTime)
 			tempLink, _ := s.Attr("data-bookinglink")
 			tempURL, _ := url.Parse(tempLink)
@@ -393,28 +297,6 @@ func (d DiningMap) AddOffer(id int, avail Available) bool {
 	foo := d[id]
 	foo.Offers = append(foo.Offers, avail)
 	return true
-}
-
-func (d DiningMap) SaveOffers(n string) {
-	//    log.Printf("Saving ... %q", d)
-	data, _ := json.MarshalIndent(d, "", " ")
-	os.WriteFile(n, data, 0644)
-}
-
-func (d DiningMap) LoadOffers(n string) {
-	j, _ := os.ReadFile(n)
-	json.Unmarshal(j, &d)
-}
-
-func init() {
-	tz, err := time.LoadLocation("America/New_York")
-	if err != nil {
-		log.Fatal("Can not load US/Eastern Time Zone")
-	}
-	disneyTZ = tz
-   log.Printf("Dining Window after %s, and before %s\n", 
-      disneyToday().Format("02 Jan 06"), 
-      disneyToday().AddDate(0,0,adrDays).Format("02 Jan 06"))
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

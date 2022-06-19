@@ -6,6 +6,7 @@ import (
 	"github.com/chromedp/chromedp"
 	"log"
 	"time"
+   "io/ioutil"
 )
 
 var CTX context.Context
@@ -33,27 +34,52 @@ func navigate(u string) {
 	}
 }
 
+func dumpPage(c context.Context, fn string) {
+   var res []byte
+   quality := 90
+   chromedp.Run(c, chromedp.FullScreenshot(&res, quality))
+ 	if err := ioutil.WriteFile(fn, res, 0o644); err != nil {
+		log.Fatal(err)
+	}
+   log.Printf("Writing %s\n", fn)
+}
+
 func wait(w string) {
 	log.Printf("Waiting for %s", w)
+   chromedp.Run(CTX, chromedp.WaitReady(w))
+/*
 	for {
-		toCTX, toCancel := context.WithTimeout(CTX, 1*time.Minute)
+		toCTX, toCancel := context.WithTimeout(CTX, 3*time.Minute)
 		defer toCancel()
 
 		err := chromedp.Run(toCTX, chromedp.WaitVisible(w, chromedp.ByID))
 		if err != nil {
+         dumpPage(CTX);
 			log.Printf("Timeout Fired, %s", err)
 			chromedp.Run(CTX, chromedp.Reload())
 			continue
 		}
 		break
 	}
+*/
 }
 
 func setSearch(date, meal, size string) {
 	log.Printf("Setting Search date=%s meal=%s size=%s", date, meal, size)
-	chromedp.Run(CTX, chromedp.SetValue(`#diningAvailabilityForm-searchDate`, date, chromedp.ByID))
-	chromedp.Run(CTX, chromedp.SendKeys(`#searchTime-wrapper > div.select-toggle.hoverable`, meal+`\r`, chromedp.ByID))
-	chromedp.Run(CTX, chromedp.SendKeys(`#partySize-wrapper > div.select-toggle.hoverable`, size+`\r`, chromedp.ByID))
+	chromedp.Run(CTX, chromedp.SetValue(`div.date-input > finder-input > input`, date, chromedp.BySearch))
+   dumpPage(CTX, "02a-searchSet.png")
+
+	chromedp.Run(CTX, 
+      chromedp.Click(`div.custom-dropdown-container`, chromedp.ByQuery),
+   )
+   dumpPage(CTX, "02b-searchSet.png")
+	chromedp.Run(CTX, 
+      chromedp.SendKeys(`#custom-dropdown-button > div.button-text-container`, meal+`\r`, chromedp.ByID),
+   )
+
+//	chromedp.Run(CTX, chromedp.SendKeys(`#partySizeCounter`, size+`\r`, chromedp.BySearch))
+   dumpPage(CTX, "02c-searchSet.png")
+
 }
 
 func runSearch() {
@@ -73,7 +99,7 @@ func runSearch() {
 		if err != nil {
 			log.Printf("Timeout Fired, %s", err)
 			chromedp.Run(CTX, chromedp.Reload())
-			wait(`#pageContainer > div.pepGlobalFooter`)
+			wait(`finder-dine-availability-filter`)
 			continue
 		}
 		break
@@ -87,9 +113,14 @@ func GetPage(u string, d time.Time, t string, p string) string {
 		log.Fatal("Oops")
 	}
 	navigate(u)
-	wait("#pageContainer > div.pepGlobalFooter")
-	setSearch(d.Format("01/02/2006"), t, p)
+	wait("finder-dine-availability-filter")
+   dumpPage(CTX, "01-Navigate.png");
+
+	setSearch(d.Format("Monday, January 2, 2006"), t, p)
+   dumpPage(CTX, "02-searchSet.png")
+
 	runSearch()
+   dumpPage(CTX, "03-runSearch.png")
 
 	chromedp.Run(CTX,
 		chromedp.ActionFunc(func(ctx context.Context) error {
