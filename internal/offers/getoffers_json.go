@@ -1,15 +1,14 @@
 package offers
 
 import (
-//	"github.com/PuerkitoBio/goquery"
 	"encoding/json"
    "fmt"
-//	"log"
-//	"net/url"
+	"log"
+	"net/url"
 //	"regexp"
-//	"strconv"
-//	"strings"
-//	"time"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type OffersAvail struct {
@@ -19,6 +18,7 @@ type OffersAvail struct {
    URL      string `json:"url"`
    ProductType string `json:"productType"`
 }
+
 type SingleLocation struct {
    UnavailableReason string   `json:"unavailableReason"`
    Title             string   `json:"title"`
@@ -31,40 +31,67 @@ type CurlAvail struct {
    Location          SingleLocation   `json:"singleLocation"`
 }
 
-//type LocStruct struct {
-//   ID string `json:"id"`
-//   Title string `json:"title"`
-//   URLFriendlyId string `json:"urlFriendlyId"`
-//   LocationType string `json:"locationType"`
-//}
-
-//type ResStruct struct {
-//   ID string `json:"id"`
-//   URLFriendlyId string `json:"urlFriendlyId"`
-//   ResURL string `json:"url"`
-//   Name string `json:"name"`
-//}
-
 type CurlReturn struct {
    Error    string `json:"error"`
    Availability map[string]CurlAvail `json:"availability"`
 }
 
-// JSON List of offers return a DiningMap
-func GetOffersJSON(availIn []byte) DiningMap {
-	dining := NewOffers()
-	// When parced should be good enough
-//	timeNow := time.Now()
+func shortID(r string) int {
+   id := strings.Split(r, ";")
+   idNum, _ := strconv.Atoi(id[0])
+   return idNum
+}
 
+// JSON List of offers return a DiningMap
+func GetOffersJSON(availIn []byte, meal string, seats int) DiningMap {
    var inMap CurlReturn
+   dining := NewOffers()
+
+	// When parced should be good enough
+   timeNow := time.Now()
 
    // Parse the JSON
    json.Unmarshal(availIn, &inMap)
+   json.Unmarshal([]byte(jsonLocations), &dining)
 
-  	data, _ := json.MarshalIndent(inMap, "", "  ")
+//  	data, _ := json.MarshalIndent(inMap, "", "  ")
+//	fmt.Printf("%s\n", data)
+   
+   for l, s:= range inMap.Availability {
+      if s.HasAvailability {
+         idNum := shortID(l)
+         v, ok := dining[idNum]
+         if !ok {
+            log.Printf("No Match for ID: %d, Skipping", idNum)
+            continue
+         }
+         fmt.Printf("%d %q\n", idNum, v.Location.Name)
+         for _, t := range s.Location.Offers {
+            w, _ := time.ParseInLocation("2006-01-02T15:04:05", t.Date+"T"+t.Time, disneyTZ)
+         	avail := Available{
+		   		When:    w,
+			   	Service: meal,
+			   	Seats:   seats,
+			   	Updated: timeNow,
+			   }
+            avail.URL, _ = url.Parse(v.Location.URL.Scheme+"://"+v.Location.URL.Host+t.URL)
+            v.Offers = append(v.Offers, avail)
+            fmt.Printf("%q\n", v.Offers)
+         }
+         dining[idNum] = v
+      }
+   }
+
+   for i := range dining {
+      if dining[i].Offers == nil {
+         delete(dining, i)
+      }
+   }
+  	data, _ := json.MarshalIndent(dining, "", "  ")
 	fmt.Printf("%s\n", data)
 
    return dining
+
 /*
 	// Load the HTML document
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))

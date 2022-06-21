@@ -12,12 +12,12 @@ func TestToday(t *testing.T) {
 }
 
 func TestJSON(t *testing.T) {
-   testJSON := "data/15Aug2022.json"
-   content, err := ioutil.ReadFile(testJSON)
+   testOffers := "data/15Aug2022.json"
+   content, err := ioutil.ReadFile(testOffers)
    if err != nil {
       t.Errorf("%s", err)
    }
-   GetOffersJSON(content)
+   GetOffersJSON(content, "Dinner", 7)
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

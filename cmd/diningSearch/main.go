@@ -91,8 +91,8 @@ func main() {
 			continue
 		}
 
-		page := GetPage(disney.Key("url").String(), offers.NormalizeDate(searchDate), searchTime, searchSize)
-		thisOffers := offers.GetOffersHTML(page)
+      this := FetchOffers(disney.Key("url").String(), searchDate, searchTime, searchSize)
+		thisOffers := offers.GetOffersJSON(this, searchDate, toInt(searchSize))
 		log.Printf("Looking for %q, list of %d", searchLocs, len(thisOffers))
 		for idx, offer := range thisOffers {
 			if offers.StringIn(searchLocs, offer.RestaurantName()) {
