@@ -8,10 +8,10 @@ import (
 )
 
 func main() {
-   d, _ := time.Parse("2006-01-02", "2022-06-23")
+   d, err := time.Parse("2006-01-02", "2022-06-23")
+   checkErr(err)
+
    entities := FetchEntities(d)
-   d, _ = time.Parse("2006-01-02", "2022-06-25")
-   entities = FetchEntities(d)
 
 /*
    testLocations := "data/locations.json"
