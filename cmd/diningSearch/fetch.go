@@ -73,7 +73,6 @@ func FetchOffers( u, d, t, sz string) []byte {
       log.Fatalln(err)
    }
 
-   log.Println(string(body))
    return body
 
 }

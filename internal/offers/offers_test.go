@@ -3,6 +3,7 @@ package offers
 import (
    "io/ioutil"
    "testing"
+   "time"
 )
 
 func TestToday(t *testing.T) {
@@ -17,7 +18,7 @@ func TestJSON(t *testing.T) {
    if err != nil {
       t.Errorf("%s", err)
    }
-   GetOffersJSON(content, "Dinner", 7)
+   GetOffersJSON(time.Now(), content, "Dinner", 7)
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

@@ -91,8 +91,9 @@ func main() {
 			continue
 		}
 
+      thisDate, _ := time.Parse("_2 Jan 2006 ", searchDate)
       this := FetchOffers(disney.Key("url").String(), searchDate, searchTime, searchSize)
-		thisOffers := offers.GetOffersJSON(this, searchDate, toInt(searchSize))
+		thisOffers := offers.GetOffersJSON(thisDate, this, searchTime, toInt(searchSize))
 		log.Printf("Looking for %q, list of %d", searchLocs, len(thisOffers))
 		for idx, offer := range thisOffers {
 			if offers.StringIn(searchLocs, offer.RestaurantName()) {

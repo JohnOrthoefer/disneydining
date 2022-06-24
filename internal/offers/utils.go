@@ -14,14 +14,14 @@ func makeDate(a time.Time)time.Time {
 func (dst DiningMap) Join(src DiningMap) DiningMap {
 	for idx, ent := range src {
 		if _, ok := dst[idx]; !ok {
-         log.Printf("Join- %s (id:%d) does not exist in dst", ent.RestaurantName(), idx)
+//         log.Printf("Join- %s (id:%d) does not exist in dst", ent.RestaurantName(), idx)
 			// move the whole thing
 			dst[idx] = ent
 			continue
 		}
 		// just move the times
       v := dst[idx]
-      start := len(v.Offers)
+//      start := len(v.Offers)
 		for _, tent := range ent.Offers {
          offset := dst[idx].FindOfferByTime(tent.When, tent.Seats)
          if offset == -1 {
@@ -31,7 +31,7 @@ func (dst DiningMap) Join(src DiningMap) DiningMap {
          }
 		}
       dst[idx] = v
-      log.Printf("Join-  %s (%d) added %d entries", ent.RestaurantName(), idx, (len(v.Offers)-start))
+//      log.Printf("Join-  %s (%d) added %d entries", ent.RestaurantName(), idx, (len(v.Offers)-start))
 	}
    return dst
 }
