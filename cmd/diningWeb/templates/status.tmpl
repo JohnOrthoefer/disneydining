@@ -1,0 +1,29 @@
+{{ template "header" . }}
+
+<script type="text/javascript" class="init">
+
+$(document).ready(function () {
+  var lastUpdate = 0;
+
+  $.getJSON('?api=update', (data) => {
+      lastUpdate = data.OffersTime;
+      $('#Updated-Offers').text(new Date(lastUpdate*1000).toString());
+  });
+
+  setInterval( function() {
+    $.getJSON('?api=update', (data) => {
+      if (lastUpdate < data.OffersTime) {
+        lastUpdate = data.OffersTime;
+        $('#Updated-Offers').text(new Date(lastUpdate*1000).toString());
+        $('#dining').DataTable().ajax.reload(); 
+      }
+    })
+  }, 30000);
+});
+</script> 
+
+<h3>Last updated: <span id="Updated-Offers"></span></h3>
+
+{{ template "footer" . }}
+<!-- vim: noai:ts=2:sw=2:set expandtab: -->
+

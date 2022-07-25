@@ -1,0 +1,27 @@
+{{ define "header" }}
+<!doctype html>
+<html lang="en">
+   <header>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      {{ template "datatables-hdr" . }}
+      <title>{{.PageTitle}}</title>
+   </header>
+   <body>
+      <div class="container">
+         <div class="row">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+               <a class="navbar-brand" href="?page=dining">Available</a>
+               <a class="navbar-brand" href="?page=status">Status</a>
+               <a class="navbar-brand" href="?page=search">Search</a>
+            </nav>
+         </div>
+         <div class="row">
+            <div class="col-1">
+            </div>
+            <div class="col-11">
+<script type="text/javascript">
+   const maybePluralize = (count, noun, suffix = 's') =>
+      `${count} ${noun}${count !== 1 ? suffix : ''}`;
+</script>
+{{ end }}
