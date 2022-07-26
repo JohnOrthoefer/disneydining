@@ -19,11 +19,12 @@ func main() {
 		log.Fatal("Failed to read config.ini file")
 	}
 
-	// Enable/Disable Timestamps
+	// Enable/Disable Timestamps in log
 	if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
 		clearTimestamps()
 	}
 
+   // Set the User Agent to your favorate browser
    if cfg.Section("browser").HasKey("agent") {
       ua := cfg.Section("browser").Key("agent").String()
       log.Printf("User Agent: %s", ua)
@@ -47,6 +48,14 @@ func main() {
 
 	// get params
 	disney := cfg.Section("disney")
+   if disney.HasKey("AuthURL") {
+      offers.SetAuthURL(disney.Key("AuthURL").String())
+   }
+   if disney.HasKey("AuthCookie") {
+      offers.SetAuthCookieName(disney.Key("AuthCookie").String())
+   }
+   offers.SetOffersURL(disney.Key("url").MustString("https://disneyworld.disney.go.com/finder/api/v1/explorer-service/dining-availability-list/false/wdw/80007798"))
+
 
 	defSize := dining.Section("DEFAULT").Key("size").String()
 	defEnable := dining.Section("DEFAULT").Key("enabled").MustBool(true)
@@ -60,9 +69,11 @@ func main() {
 
 	for _, s := range dining.Sections() {
 		searchName := s.Name()
+      // default section is not a search section
 		if searchName == "DEFAULT" {
 			continue
 		}
+      // Section must be "enabled"
 		if !s.Key("enabled").MustBool(defEnable) {
 			continue
 		}
@@ -78,8 +89,8 @@ func main() {
 		}
 
       thisDate, _ := time.Parse("_2 Jan 2006 ", searchDate)
-      this := FetchOffers(disney.Key("url").String(), searchDate, searchTime, searchSize)
-		thisOffers := offers.GetOffersJSON(thisDate, this, searchTime, toInt(searchSize))
+      this := offers.FetchOffers(searchDate, searchTime, searchSize)
+		thisOffers := offers.GetOffersJSON(thisDate, this, searchTime, offers.ToInt(searchSize))
       log.Printf("Entries Retrived: %d", len(thisOffers))
 		// once we've checked for new offers, add this search to the all
 		allOffers = allOffers.Join(thisOffers)
@@ -96,7 +107,7 @@ func main() {
 		log.Printf("Purged %d old entries",
 			allOffers.PurgeOffers(cfg.Section("DEFAULT").Key("offerretention").MustDuration(retention)))
 		offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
-		log.Printf("Saving offers %d at %d locations to %s", allOffers.CountOffers(), len(allOffers), offersName)
+		log.Printf("Saving %d offers at %d locations to %s", allOffers.CountOffers(), len(allOffers), offersName)
 		allOffers.SaveOffers(offersName)
 	}
 }

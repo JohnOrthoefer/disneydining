@@ -1,13 +1,16 @@
-package main
+package offers
 
 import (
    "io/ioutil"
    "log"
    "net/http"
+   "net/url"
    "strings"
    "strconv"
    "time"
 )
+
+var offersURL *url.URL
 
 func urlDate(t string) string {
    w, err := time.Parse("_2 Jan 2006 ", t)
@@ -22,7 +25,7 @@ func urlSize(t string) string {
    return strings.TrimSpace(t)
 }
 
-func toInt(t string) int {
+func ToInt(t string) int {
    r, _ := strconv.Atoi(urlSize(t))
    return r
 }
@@ -45,10 +48,23 @@ func urlMeal(t string) string {
    return "mealPeriod=80000717"
 }
 
-func FetchOffers( u, d, t, sz string) []byte {
+func SetOffersURL(u string) {
+   t, err := url.Parse(u)
+   checkErr(err)
+   offersURL = t
+}
+
+func GetOffersURL() string {
+   if offersURL == nil {
+      log.Fatal("Offer URL not set")
+   }
+   return offersURL.String()
+}
+
+func FetchOffers(d, t, sz string) []byte {
    client := &http.Client{}
 
-    url := u+
+    url := GetOffersURL() +
       ";entityType=destination/" +
       urlDate(d) + "/" +
       urlSize(sz) + "/?" +
@@ -60,7 +76,7 @@ func FetchOffers( u, d, t, sz string) []byte {
       log.Fatalln(err)
    }
 
-   req.Header.Set("User-Agent", "Chrome/102.0.0.0")
+   req.Header.Set("User-Agent", GetUserAgent())
 
    resp, err := client.Do(req)
    if err != nil {
@@ -74,7 +90,6 @@ func FetchOffers( u, d, t, sz string) []byte {
    }
 
    return body
-
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:
