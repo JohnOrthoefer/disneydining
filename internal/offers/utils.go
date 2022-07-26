@@ -70,7 +70,7 @@ func CheckDate(when string) bool {
 		return false
 	}
 
-	return w.After(disneyToday()) && 
+	return w.After(disneyToday().AddDate(0, 0, -1)) && 
       w.Before(disneyToday().AddDate(0,0,adrDays))
 }
 
