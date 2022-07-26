@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/root/diningSearch
-ExecStartPre=/bin/sh -c '/bin/rm -rf /tmp/chromedp-runner*'
-ExecStart=/root/diningSearch/diningSearch
+ExecStartPre=-/usr/bin/mkdir /tmp/dining
+ExecStart=/root/diningSearch/diningUpdate
 
 [Install]
 WantedBy=multi-user.target
