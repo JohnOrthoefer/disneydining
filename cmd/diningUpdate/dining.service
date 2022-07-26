@@ -1,0 +1,12 @@
+[Unit]
+Description=Disney Dining 
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/diningSearch
+ExecStartPre=-/usr/bin/mkdir /tmp/dining
+ExecStart=/root/diningSearch/diningUpdate
+
+[Install]
+WantedBy=multi-user.target

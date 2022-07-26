@@ -1,0 +1,9 @@
+[Unit]
+	Description=Check Dining
+
+[Timer]
+	OnUnitInactiveSec=30s
+	Unit=dining.service
+
+[Install]
+	WantedBy=basic.target
