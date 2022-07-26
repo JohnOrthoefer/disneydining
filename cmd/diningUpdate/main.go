@@ -10,7 +10,11 @@ import (
 
 func main() {
 	// Read the config file
-	cfg, err := ini.Load("config.ini")
+	//cfg, err := ini.Load("config.ini")
+	cfg, err := ini.LoadSources(ini.LoadOptions{
+	   IgnoreInlineComment:         true,
+	   UnescapeValueCommentSymbols: true,
+      }, "config.ini")
 	if err != nil {
 		log.Fatal("Failed to read config.ini file")
 	}
@@ -19,6 +23,13 @@ func main() {
 	if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
 		clearTimestamps()
 	}
+
+   if cfg.Section("browser").HasKey("agent") {
+      ua := cfg.Section("browser").Key("agent").String()
+      log.Printf("User Agent: %s", ua)
+      offers.SetUserAgent(ua)
+   }
+      
 
 	// info
 	displayBuildInfo()
@@ -69,6 +80,7 @@ func main() {
       thisDate, _ := time.Parse("_2 Jan 2006 ", searchDate)
       this := FetchOffers(disney.Key("url").String(), searchDate, searchTime, searchSize)
 		thisOffers := offers.GetOffersJSON(thisDate, this, searchTime, toInt(searchSize))
+      log.Printf("Entries Retrived: %d", len(thisOffers))
 		// once we've checked for new offers, add this search to the all
 		allOffers = allOffers.Join(thisOffers)
 

@@ -12,7 +12,7 @@ var authToken *http.Cookie
 
 func getAuth() *http.Cookie{
    if authToken != nil {
-      fmt.Printf("Token Found %s\n", authToken.String())
+      //fmt.Printf("Token Found %s\n", authToken.String())
       return authToken
    }
 
@@ -22,7 +22,7 @@ func getAuth() *http.Cookie{
    req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("{}")))
    checkErr(err)
 
-   req.Header.Set("User-Agent", "Chrome/102.0.0.0")
+   req.Header.Set("User-Agent", getUserAgent())
    resp, err := client.Do(req)
    checkErr(err)
 
@@ -31,7 +31,7 @@ func getAuth() *http.Cookie{
    for _, c := range resp.Cookies() {
       if c.Name == "__d" {
          authToken = c
-         fmt.Printf("New Token %s\n", authToken.String())
+         //fmt.Printf("New Token %s\n", authToken.String())
          return authToken
       }
    }
@@ -48,7 +48,7 @@ func FetchEntities(d time.Time) []byte {
    req, err := http.NewRequest("GET", url, nil)
    checkErr(err)
 
-   req.Header.Set("User-Agent", "Chrome/102.0.0.0")
+   req.Header.Set("User-Agent", getUserAgent())
    req.AddCookie(getAuth())
    resp, err := client.Do(req)
    checkErr(err)
