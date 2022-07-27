@@ -11,12 +11,15 @@ NOW=$(shell date +%Y-%m-%d_%T)
 #export HTTP_PROXY=http://llproxy.llan.ll.mit.edu:8080
 #export HTTPS_PROXY=${HTTP_PROXY}
 
+
 diningUpdate: ${SRC} ${INTERNAL}
 	echo ${REPONAME}
 	${GOLANG} build \
       -ldflags "-X main.sha1ver=${SHA1} -X main.buildTime=${NOW} -X main.repoName=${REPONAME}"
 
-update: update-go update-json
+all: update diningUpdate 
+
+update: update-go
 
 update-go:
 	${GOLANG} get gopkg.in/ini.v1
