@@ -1,4 +1,4 @@
-SRC=build.go log.go main.go
+SRC=build.go log.go main.go const.go
 INTERNAL=../../internal/offers/offers.go ../../internal/mail/mail.go
 EXE=diningUpdate
 #GOLANG=/usr/local/go/bin/go

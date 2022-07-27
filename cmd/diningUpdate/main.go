@@ -54,7 +54,7 @@ func main() {
    if disney.HasKey("AuthCookie") {
       offers.SetAuthCookieName(disney.Key("AuthCookie").String())
    }
-   offers.SetOffersURL(disney.Key("url").MustString("https://disneyworld.disney.go.com/finder/api/v1/explorer-service/dining-availability-list/false/wdw/80007798"))
+   offers.SetOffersURL(disney.Key("url").MustString(defaultQueryURL))
 
 
 	defSize := dining.Section("DEFAULT").Key("size").String()
