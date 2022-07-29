@@ -19,3 +19,5 @@ Old
 *.html
 src
 pkg
+bin
+*.gzip
