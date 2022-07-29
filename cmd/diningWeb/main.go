@@ -73,6 +73,7 @@ func getOffers(s string) ([]byte, error) {
 		Data []Offers `json:"data"`
 	}
 
+    log.Printf("getOffers(\"%s\")", s)
 	j := offers.NewOffers()
     j.LoadOffers(s)
 	for _, offer := range j {
