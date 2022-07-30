@@ -1,8 +1,8 @@
-SRC= main.go build.go
+SRC= main.go build.go startWatcher.go
 INTERNAL=../../internal/offers/offers.go
 EXE=diningWeb
-#GOLANG=/usr/local/go/bin/go
-GOLANG=/usr/bin/go
+GOLANG=/usr/local/go/bin/go
+#GOLANG=/usr/bin/go
 CURL=/usr/bin/curl
 GIT=/usr/bin/git
 REPONAME=$(shell basename `git rev-parse --show-toplevel`)

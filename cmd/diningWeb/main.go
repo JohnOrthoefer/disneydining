@@ -1,7 +1,6 @@
 package main
 
 import (
-	"disneydining/internal/offers"
 	"encoding/json"
 	"errors"
 	"gopkg.in/ini.v1"
@@ -74,9 +73,7 @@ func getOffers(s string) ([]byte, error) {
 	}
 
     log.Printf("getOffers(\"%s\")", s)
-	j := offers.NewOffers()
-    j.LoadOffers(s)
-	for _, offer := range j {
+	for _, offer := range currentOffers() {
         for _, date := range offer.GroupByDate() {
             for _, meal := range offer.MealsByDate(date) {
                 for _, seats := range offer.SeatsByMeal(date, meal) {
@@ -223,6 +220,7 @@ func main() {
 
 	tmplcfg := cfg.Section("templates")
 	tmplIndex = make(map[string]URLs)
+
 	for _, p := range tmplcfg.Keys() {
 		tp, err := cfg.GetSection(p.String())
 		if err != nil {
@@ -242,6 +240,8 @@ func main() {
 	for _, i := range cfg.Section("locations").Keys() {
 		xlatLoc[i.Name()] = i.String()
 	}
+
+    startWatcher(offersFile)
 
 	http.HandleFunc("/", handler)
 	log.Printf("Starting Web Server, %s", listen)
