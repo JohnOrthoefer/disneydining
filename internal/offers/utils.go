@@ -14,14 +14,12 @@ func makeDate(a time.Time)time.Time {
 func (dst DiningMap) Join(src DiningMap) DiningMap {
 	for idx, ent := range src {
 		if _, ok := dst[idx]; !ok {
-//         log.Printf("Join- %s (id:%d) does not exist in dst", ent.RestaurantName(), idx)
 			// move the whole thing
 			dst[idx] = ent
 			continue
 		}
 		// just move the times
       v := dst[idx]
-//      start := len(v.Offers)
 		for _, tent := range ent.Offers {
          offset := dst[idx].FindOfferByTime(tent.When, tent.Seats)
          if offset == -1 {
@@ -31,7 +29,6 @@ func (dst DiningMap) Join(src DiningMap) DiningMap {
          }
 		}
       dst[idx] = v
-//      log.Printf("Join-  %s (%d) added %d entries", ent.RestaurantName(), idx, (len(v.Offers)-start))
 	}
    return dst
 }
@@ -40,6 +37,21 @@ func (dst DiningMap) Join(src DiningMap) DiningMap {
 func disneyToday() time.Time {
 	n := time.Now().In(disneyTZ)
 	return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, disneyTZ)
+}
+
+func NormalizeMeal(s string) string {
+   lcs := strings.ToLower(strings.TrimSpace(s))
+   switch lcs {
+   case "breakfast":
+      return "Breakfast"
+   case "brunch":
+      return "Brunch"
+   case "lunch":
+      return "Lunch"
+   case "dinner":
+      return "Dinner"
+   }
+   return lcs
 }
 
 func NormalizeDate(b string) time.Time {

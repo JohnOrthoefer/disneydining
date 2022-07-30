@@ -2,10 +2,8 @@ package offers
 
 import (
 	"encoding/json"
-//   "fmt"
 	"log"
 	"net/url"
-//	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -61,18 +59,16 @@ func GetOffersJSON(dt time.Time, availIn []byte, meal string, seats int) DiningM
             log.Printf("No Match for ID: %d, Skipping", idNum)
             continue
          }
-//         fmt.Printf("%d %q\n", idNum, v.Location.Name)
          for _, t := range s.Location.Offers {
             w, _ := time.ParseInLocation("2006-01-02T15:04:05", t.Date+"T"+t.Time, disneyTZ)
          	avail := Available{
 		   		When:    w,
-			   	Service: meal,
+			   	Service: NormalizeMeal(meal),
 			   	Seats:   seats,
 			   	Updated: timeNow,
 			   }
             avail.URL, _ = url.Parse(v.Location.URL.Scheme+"://"+v.Location.URL.Host+t.URL)
             v.Offers = append(v.Offers, avail)
-//            fmt.Printf("%q\n", v.Offers)
          }
          dining[idNum] = v
       }
@@ -83,8 +79,6 @@ func GetOffersJSON(dt time.Time, availIn []byte, meal string, seats int) DiningM
          delete(dining, i)
       }
    }
-//`  	data, _ := json.MarshalIndent(dining, "", "  ")
-//	fmt.Printf("%s\n", data)
 
    return dining
 }
