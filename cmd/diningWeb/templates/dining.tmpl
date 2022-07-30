@@ -20,6 +20,16 @@ function prepend(value, array) {
   return newArray;
 }
 
+function selectLocation(val) {
+  console.log(val);
+  document.getElementById('locationBtn').innerHTML='Location';
+  if (val !== 'All') {
+    document.getElementById('locationBtn').innerHTML=val;
+  }
+  document.getElementById('selectLocation').value=val;
+  $('#dining').DataTable().draw(false);
+}
+
 function selectDate(val) {
   console.log(val);
   document.getElementById('dateBtn').innerHTML='Date';
@@ -37,14 +47,22 @@ $(document).ready(function () {
   $.fn.dataTable.ext.search.push(
     function( settings, data, dataIndex) {
       var dateVal = ((typeof $('#selectDate').val()) == 'undefined')? 
-        'All':
-        $('#selectDate').val();
+        'All': $('#selectDate').val();
+      var locationVal = ((typeof $('#selectLocation').val()) == 'undefined')?
+        'All': $('#selectLocation').val();
+  
       console.log(dateVal);
-      if ( (dateVal == 'All') || 
-           (dateVal == data[2]) ) {
-        return true;
+      var rtn = ((locationVal == data[0]) && 
+                 (dateVal == data[2]));
+      if ( (dateVal == 'All') && (locationVal == 'All')) {
+        rtn = true;
+      } else if ((dateVal == 'All') && (locationVal == data[0])) {
+	rtn = true;
+      } else if ((locationVal == 'All') && (dateVal == data[2])) {
+	rtn = true;
       }
-      return false;
+       
+      return rtn;
     }
   ); 
   $('#dining').DataTable({
@@ -58,22 +76,42 @@ $(document).ready(function () {
       "cache": true
     },
     "fnInitComplete": function(oSettings, json) {
-	    console.log(json)
-	    let result = json.data.map( a => a.Date);
-    	let dates = prepend( "All", sort_unique(result));
-      var ulList = document.getElementById("dateList");
-      while (ulList.firstChild) {
-        ulList.removeChild(ulList.firstChild);
+	console.log(json)
+	let resultDates = json.data.map( a => a.Date);
+	let resultLocs = json.data.map( a => a.Location);
+    	let dates = prepend( "All", sort_unique(resultDates));
+    	let locs = prepend( "All", sort_unique(resultLocs));
+
+      var ulDateList = document.getElementById("dateList");
+      while (ulDateList.firstChild) {
+        ulDateList.removeChild(ulDateList.firstChild);
       }
-	    for (const val of dates) {
-	      var option = document.createElement("li");
+
+      var ulLocList = document.getElementById("locationList");
+      while (ulLocList.firstChild) {
+        ulLocList.removeChild(ulLocList.firstChild);
+      }
+
+      for (const val of dates) {
+        var option = document.createElement("li");
         var link = document.createElement("a");
         link.innerHTML = val;
         link.setAttribute("class", "dropdown-item");
         link.setAttribute("href", "#");
         link.setAttribute("onclick", "selectDate($(this).text())");
         option.appendChild(link);
-        ulList.appendChild(option);
+        ulDateList.appendChild(option);
+      }
+
+      for (const val of locs) {
+        var option = document.createElement("li");
+        var link = document.createElement("a");
+        link.innerHTML = val;
+        link.setAttribute("class", "dropdown-item");
+        link.setAttribute("href", "#");
+        link.setAttribute("onclick", "selectLocation($(this).text())");
+        option.appendChild(link);
+        ulLocList.appendChild(option);
       }
     },
     "rowGroup": {
@@ -184,7 +222,14 @@ $(document).ready(function () {
   </ul>
 </div>
 
+<div class="dropdown">
+  <button id="locationBtn" type='button' class='btn btn-primary dropdown-toggle' data-bs-toggle='dropdown' aria-expanded='false'>Location</button>
+  <ul class='dropdown-menu' id='locationList'>
+  </ul>
+</div>
+
 <input type='hidden' id='selectDate' value='All'>
+<input type='hidden' id='selectLocation' value='All'>
 
 <table id="dining" class="table" style="width:90%">
   <thead>
