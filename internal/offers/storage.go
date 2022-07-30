@@ -5,15 +5,14 @@ import (
    "compress/zlib"
    "compress/gzip"
    "os"
-   "lockedfile"
    "io"
-   "log"
+//   "log"
    "path"
 )
 
 func (d DiningMap) SaveOffers(n string) {
 
-   f, err := lockedfile.OpenFile(n, os.O_WRONLY|os.O_CREATE, 0644)
+   f, err := os.OpenFile(n+".new", os.O_WRONLY|os.O_CREATE, 0644)
    checkErr(err)
    defer f.Close()
 
@@ -32,13 +31,15 @@ func (d DiningMap) SaveOffers(n string) {
       w.Close()
    default:
       f.Write(data)
-      f.Flush()
    }
+   err = os.Rename(n, n+".bak")
+   checkErr(err)
+   err = os.Rename(n+".new", n)
+   checkErr(err)
 }
 
 func (d DiningMap) LoadOffers(n string) {
-   f, err := lockedfile.OpenFile(n, os.O_RDONLY, 0644)
-   defer f.Close()
+   f, err := os.Open(n)
 
    if os.IsNotExist(err) {
       d = NewOffers()
@@ -46,16 +47,21 @@ func (d DiningMap) LoadOffers(n string) {
    }
    checkErr(err)
 
+//   log.Printf("Seeking...")
+//   f.Seek(0, 0)
+
    switch path.Ext(n) {
    case ".gzip":
       r, err := gzip.NewReader(f)
       checkErr(err)
-      j, err := io.ReadAll(r)
-      r.Close()
-      if err != nil {
+      j, _ := io.ReadAll(r)
+/*      if err != nil {
+         log.Printf("len(j) = %d", len(j))
          log.Printf("in LoadOffers - %s\n", err)
          d = NewOffers()
       }
+*/
+      r.Close()
       json.Unmarshal(j, &d)
    case ".zz":
       r, err := zlib.NewReader(f)
@@ -69,6 +75,7 @@ func (d DiningMap) LoadOffers(n string) {
       checkErr(err)
 	   json.Unmarshal(j, &d)
    }
+   f.Close()
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:
