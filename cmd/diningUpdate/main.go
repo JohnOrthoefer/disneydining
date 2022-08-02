@@ -6,11 +6,13 @@ import (
 	"gopkg.in/ini.v1"
 	"log"
 	"time"
+   "strings"
 )
 
 type diningChannel struct {
    date       time.Time
    time       string
+   size       int
    diningMap  offers.DiningMap
 }
 
@@ -106,16 +108,20 @@ func main() {
          continue
       }
 
-      // shoot off a thread to fetch and parse the errors
-      offersCnt += 1
-      go func() {
-         this := offers.FetchOffers(thisDate, searchTime, searchSize)
-		   offersChan <- diningChannel{
-            date: thisDate,
-            time: searchTime,
-            diningMap: offers.GetOffersJSON(thisDate, this, searchTime, offers.ToInt(searchSize)),
-         }
-      }()
+      for _, size := range strings.Fields(searchSize) {
+         // shoot off a thread to fetch and parse the errors
+         offersCnt += 1
+         go func(dt time.Time, tm string, s int) {
+            log.Printf("%s %s Size = %d", dt.Format("2 Jan 2006"), tm, s)
+            this := offers.FetchOffers(dt, tm, s)
+		      offersChan <- diningChannel{
+               date: dt,
+               time: tm,
+               size: s,
+               diningMap: offers.GetOffersJSON(dt, this, tm, s),
+            }
+         }(thisDate, searchTime, offers.ToInt(size))
+      }
    }
 
    log.Printf("threads running: %d", offersCnt)
@@ -127,7 +133,7 @@ func main() {
          log.Printf("%s@%s- No Entries returned from thread", thisOffers.date.Format("2 Jan 2006"), thisOffers.time)
          continue
       }
-      log.Printf("%s@%s- Entries Retrived: %d", thisOffers.date.Format("2 Jan 2006"), thisOffers.time, len(thisOffers.diningMap))
+      log.Printf("%s@%s for %d- Entries Retrived: %d", thisOffers.date.Format("2 Jan 2006"), thisOffers.time, thisOffers.size, len(thisOffers.diningMap))
 		// once we've checked for new offers, add this search to the all
 		allOffers = allOffers.Join(thisOffers.diningMap)
 	}
