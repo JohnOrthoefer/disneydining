@@ -6,7 +6,7 @@ import (
    "compress/gzip"
    "os"
    "io"
-//   "log"
+   "log"
    "path"
 )
 
@@ -33,7 +33,9 @@ func (d DiningMap) SaveOffers(n string) {
       f.Write(data)
    }
    err = os.Rename(n, n+".bak")
-   checkErr(err)
+   if err != nil {
+      log.Printf("Skipping: %s", err)
+   }
    err = os.Rename(n+".new", n)
    checkErr(err)
 }
