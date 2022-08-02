@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+type diningChannel struct {
+   date       time.Time
+   time       string
+   diningMap  offers.DiningMap
+}
+
 func main() {
 	// Read the config file
 	//cfg, err := ini.Load("config.ini")
@@ -67,6 +73,9 @@ func main() {
 		log.Printf("Loaded %d offers at %d locations from %s", allOffers.CountOffers(), len(allOffers), offersName)
 	}
 
+   offersChan := make(chan diningChannel)
+   offersCnt  := 0
+
 	for _, s := range dining.Sections() {
 		searchName := s.Name()
       // default section is not a search section
@@ -78,31 +87,51 @@ func main() {
 			continue
 		}
 
+      // get this sections information
 		searchDate := s.Key("date").String()
-		searchTime := s.Key("time").String()
+		searchTime := offers.NormalizeMeal(s.Key("time").MustString("Lunch"))
 		searchSize := s.Key("size").MustString(defSize)
 		log.Printf("%s: %s@%s size:%s", searchName, searchDate, searchTime, searchSize)
 
+      // if the date is in the past or too far in the future ignore
 		if !offers.CheckDate(searchDate) {
 			log.Printf("Skipping")
 			continue
 		}
 
-      thisDate, _ := time.Parse("_2 Jan 2006 ", searchDate)
-      this := offers.FetchOffers(searchDate, searchTime, searchSize)
-		thisOffers := offers.GetOffersJSON(thisDate, this, searchTime, offers.ToInt(searchSize))
-      log.Printf("Entries Retrived: %d", len(thisOffers))
-		// once we've checked for new offers, add this search to the all
-		allOffers = allOffers.Join(thisOffers)
+      // make sure the date parses
+      thisDate, err := time.Parse("_2 Jan 2006 ", searchDate)
+      if err != nil {
+         log.Printf("Could not parse %s.. Skipping\n", searchDate)
+         continue
+      }
 
-/*
-		if cfg.Section("DEFAULT").HasKey("saveoffers") {
-			offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
-			log.Printf("Saving offers to %s", offersName)
-			allOffers.SaveOffers(offersName)
-		}
-*/
+      // shoot off a thread to fetch and parse the errors
+      offersCnt += 1
+      go func() {
+         this := offers.FetchOffers(thisDate, searchTime, searchSize)
+		   offersChan <- diningChannel{
+            date: thisDate,
+            time: searchTime,
+            diningMap: offers.GetOffersJSON(thisDate, this, searchTime, offers.ToInt(searchSize)),
+         }
+      }()
+   }
+
+   log.Printf("threads running: %d", offersCnt)
+   // wait for all the threads to checkin
+   for offersCnt > 0 {
+      thisOffers := <- offersChan
+      offersCnt -= 1
+      if len(thisOffers.diningMap) == 0 {
+         log.Printf("%s@%s- No Entries returned from thread", thisOffers.date.Format("2 Jan 2006"), thisOffers.time)
+         continue
+      }
+      log.Printf("%s@%s- Entries Retrived: %d", thisOffers.date.Format("2 Jan 2006"), thisOffers.time, len(thisOffers.diningMap))
+		// once we've checked for new offers, add this search to the all
+		allOffers = allOffers.Join(thisOffers.diningMap)
 	}
+
 	timeout.StopTimer()
 	if cfg.Section("DEFAULT").HasKey("saveoffers") {
 		retention, _ := time.ParseDuration("30m")
