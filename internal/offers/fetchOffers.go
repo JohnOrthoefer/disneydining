@@ -16,12 +16,13 @@ func urlDate(t time.Time) string {
    return t.Format("2006-01-02")
 }
 
-func urlSize(t string) string {
-   return strings.TrimSpace(t)
+func urlSize(t int) string {
+   return strconv.Itoa(t)
+   //return strings.TrimSpace(t)
 }
 
 func ToInt(t string) int {
-   r, _ := strconv.Atoi(urlSize(t))
+   r, _ := strconv.Atoi(t)
    return r
 }
 
@@ -57,7 +58,7 @@ func GetOffersURL() string {
 }
 
 
-func FetchOffers(d time.Time, t, sz string) []byte {
+func FetchOffers(d time.Time, t string, sz int) []byte {
    client := &http.Client{}
 
     url := GetOffersURL() +
