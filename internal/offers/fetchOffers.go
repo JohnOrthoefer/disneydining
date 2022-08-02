@@ -12,13 +12,8 @@ import (
 
 var offersURL *url.URL
 
-func urlDate(t string) string {
-   w, err := time.Parse("_2 Jan 2006 ", t)
-   if err != nil {
-      log.Printf("Date Check error %s", err)
-      return time.Now().Format("2006-01-02")
-   }
-   return w.Format("2006-01-02")
+func urlDate(t time.Time) string {
+   return t.Format("2006-01-02")
 }
 
 func urlSize(t string) string {
@@ -61,7 +56,8 @@ func GetOffersURL() string {
    return offersURL.String()
 }
 
-func FetchOffers(d, t, sz string) []byte {
+
+func FetchOffers(d time.Time, t, sz string) []byte {
    client := &http.Client{}
 
     url := GetOffersURL() +
