@@ -18,7 +18,6 @@ type diningChannel struct {
 
 func main() {
 	// Read the config file
-	//cfg, err := ini.Load("config.ini")
 	cfg, err := ini.LoadSources(ini.LoadOptions{
 	   IgnoreInlineComment:         true,
 	   UnescapeValueCommentSymbols: true,
