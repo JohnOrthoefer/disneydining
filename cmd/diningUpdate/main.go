@@ -7,16 +7,32 @@ import (
 	"log"
 	"time"
    "strings"
+   "fmt"
 )
 
-type diningChannel struct {
+type diningInfo struct {
    date       time.Time
    time       string
    size       int
    diningMap  offers.DiningMap
 }
 
+func inRequests(dl []diningInfo, r diningInfo) bool {
+   for _, i := range dl {
+      if (i.date == r.date) && (i.time == r.time) && (i.size == r.size) {
+         return true
+      }
+   }
+   return false
+}
+
+func fmtDiningInfo(di diningInfo) string {
+   return fmt.Sprintf("%s@%s Size=%d",  di.date.Format("2 Jan 2006"), di.time, di.size)
+}
+
 func main() {
+   var diningRequests []diningInfo
+
 	// Read the config file
 	cfg, err := ini.LoadSources(ini.LoadOptions{
 	   IgnoreInlineComment:         true,
@@ -74,7 +90,7 @@ func main() {
 		log.Printf("Loaded %d offers at %d locations from %s", allOffers.CountOffers(), len(allOffers), offersName)
 	}
 
-   offersChan := make(chan diningChannel)
+   offersChan := make(chan diningInfo, 10)
    offersCnt  := 0
 
 	for _, s := range dining.Sections() {
@@ -92,34 +108,40 @@ func main() {
 		searchDate := s.Key("date").String()
 		searchTime := offers.NormalizeMeal(s.Key("time").MustString("Lunch"))
 		searchSize := s.Key("size").MustString(defSize)
-		log.Printf("%s: %s@%s size:%s", searchName, searchDate, searchTime, searchSize)
 
       // if the date is in the past or too far in the future ignore
 		if !offers.CheckDate(searchDate) {
-			log.Printf("Skipping")
+			log.Printf("%s Skipping", searchName)
 			continue
 		}
 
       // make sure the date parses
       thisDate, err := time.Parse("_2 Jan 2006 ", searchDate)
       if err != nil {
-         log.Printf("Could not parse %s.. Skipping\n", searchDate)
+         log.Printf("%s: Could not parse %s.. Skipping\n", searchName, searchDate)
          continue
       }
 
       for _, size := range strings.Fields(searchSize) {
+         di := diningInfo{
+            date: thisDate, 
+            time: searchTime,
+            size: offers.ToInt(size),
+         }
+         if inRequests(diningRequests, di) {
+            log.Printf("%s: Skipping already requested: %s", searchName, fmtDiningInfo(di))
+            continue
+         }
+         diningRequests = append(diningRequests, di)
+         log.Printf("%s: %s starting", searchName, fmtDiningInfo(di))
          // shoot off a thread to fetch and parse the errors
          offersCnt += 1
-         go func(dt time.Time, tm string, s int) {
-            log.Printf("%s %s Size = %d", dt.Format("2 Jan 2006"), tm, s)
-            this := offers.FetchOffers(dt, tm, s)
-		      offersChan <- diningChannel{
-               date: dt,
-               time: tm,
-               size: s,
-               diningMap: offers.GetOffersJSON(dt, this, tm, s),
-            }
-         }(thisDate, searchTime, offers.ToInt(size))
+         go func(di diningInfo) {
+            this := offers.FetchOffers(di.date, di.time, di.size)
+            di.diningMap = offers.GetOffersJSON(di.date, 
+               this, di.time, di.size)
+		      offersChan <- di
+         }(di)
       }
    }
 
@@ -129,10 +151,11 @@ func main() {
       thisOffers := <- offersChan
       offersCnt -= 1
       if len(thisOffers.diningMap) == 0 {
-         log.Printf("%s@%s- No Entries returned from thread", thisOffers.date.Format("2 Jan 2006"), thisOffers.time)
+         log.Printf("%s - No Entries returned from thread", fmtDiningInfo(thisOffers))
          continue
       }
-      log.Printf("%s@%s for %d- Entries Retrived: %d", thisOffers.date.Format("2 Jan 2006"), thisOffers.time, thisOffers.size, len(thisOffers.diningMap))
+      log.Printf("%s- Entries Retrived: %d", fmtDiningInfo(thisOffers),
+         len(thisOffers.diningMap))
 		// once we've checked for new offers, add this search to the all
 		allOffers = allOffers.Join(thisOffers.diningMap)
 	}
