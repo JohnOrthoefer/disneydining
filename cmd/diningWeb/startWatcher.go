@@ -34,8 +34,14 @@ func reloadOffers(w *fsnotify.Watcher) {
          if !ok { 
             return
          }
-         log.Printf("%s saved offers", event)
-         saveOffers()
+         log.Printf("Event(%d): %s", event.Op, event)
+         if event.Op == fsnotify.Remove {
+            // reset watcher to look at the new file
+            w.Remove(event.Name)
+            w.Add(event.Name)
+            log.Printf("Reloading %s saved offers", event)
+            saveOffers()
+         }
       case err, ok := <-w.Errors:
          if !ok {
             return
