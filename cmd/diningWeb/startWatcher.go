@@ -5,6 +5,7 @@ import (
    "log"
    "github.com/fsnotify/fsnotify"
    "disneydining/internal/offers"
+   "path/filepath"
 )
 
 var savedOffersFile string
@@ -36,18 +37,25 @@ func reloadOffers(w *fsnotify.Watcher) {
          if !ok { 
             return
          }
-         log.Printf("Event(%d): %s", event.Op, event)
-         if (event.Op == fsnotify.Rename) {
-            time.Sleep(50 * time.Microsecond)
+         // watching the directory seems to be more stable
+         if (event.Op == fsnotify.Create) && 
+            (event.Name == getOffersFile()) {
+            log.Printf("Event(%d): %s", event.Op, event)
+            time.Sleep(50 * time.Microsecond) 
             log.Printf("Reloading %s saved offers", watchFile)
-            // reset watcher to look at the new file
-            err := w.Add(watchFile)
-            if err != nil {
-                log.Printf("Add Error: %s", err)
-            }
             saveOffers()
-            log.Printf("Watching: %q", w.WatchList())
          }
+//         if (event.Op == fsnotify.Rename) {
+//            time.Sleep(50 * time.Microsecond)
+//            log.Printf("Reloading %s saved offers", watchFile)
+//            // reset watcher to look at the new file
+//            err := w.Add(watchFile)
+//            if err != nil {
+//                log.Printf("Add Error: %s", err)
+//            }
+//            saveOffers()
+//            log.Printf("Watching: %q", w.WatchList())
+//         }
       case err, ok := <-w.Errors:
          if !ok {
             return
@@ -70,6 +78,7 @@ func startWatcher(f string) {
 
    go reloadOffers(watcher)
 
+   err = watcher.Add(filepath.Dir(f))
    err = watcher.Add(f)
    if err != nil {
       log.Fatal("Watcher Add: ", err)
