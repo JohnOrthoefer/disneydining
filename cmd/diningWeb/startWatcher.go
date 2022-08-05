@@ -1,6 +1,7 @@
 package main
 
 import (
+   "time"
    "log"
    "github.com/fsnotify/fsnotify"
    "disneydining/internal/offers"
@@ -8,6 +9,7 @@ import (
 
 var savedOffersFile string
 var savedOffers offers.DiningMap
+var watchFile string
 
 func setOffersFile(f string) {
    savedOffersFile = f
@@ -35,13 +37,16 @@ func reloadOffers(w *fsnotify.Watcher) {
             return
          }
          log.Printf("Event(%d): %s", event.Op, event)
-         if (event.Op == fsnotify.Remove) ||
-            (event.Op == fsnotify.Rename) {
-            log.Printf("Reloading %s saved offers", event.Name)
+         if (event.Op == fsnotify.Rename) {
+            time.Sleep(50 * time.Microsecond)
+            log.Printf("Reloading %s saved offers", watchFile)
             // reset watcher to look at the new file
-            w.Remove(event.Name)
-            w.Add(event.Name)
+            err := w.Add(watchFile)
+            if err != nil {
+                log.Printf("Add Error: %s", err)
+            }
             saveOffers()
+            log.Printf("Watching: %q", w.WatchList())
          }
       case err, ok := <-w.Errors:
          if !ok {
@@ -61,7 +66,7 @@ func startWatcher(f string) {
    if err != nil {
       log.Fatal("Watcher New: ", err)
    }
-   //defer watcher.Close()
+   watchFile = f
 
    go reloadOffers(watcher)
 
