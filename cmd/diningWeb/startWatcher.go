@@ -1,34 +1,53 @@
 package main
 
 import (
-   "time"
-   "log"
-   "github.com/fsnotify/fsnotify"
-   "disneydining/internal/offers"
-   "path/filepath"
+    "time"
+    "log"
+    "os"
+    "strconv"
+    "github.com/fsnotify/fsnotify"
+    "disneydining/internal/offers"
+    "path/filepath"
+    "encoding/json"
 )
 
 var savedOffersFile string
 var savedOffers offers.DiningMap
 var watchFile string
+var timeStamp []byte
 
 func setOffersFile(f string) {
-   savedOffersFile = f
+    savedOffersFile = f
 }
 
 func getOffersFile() string {
-   return savedOffersFile
+    return savedOffersFile
 }
 
 func saveOffers() {
+    var tmpData struct {
+        OffersSize string
+        OffersTime int64
+    }
+
     log.Printf("saving Offers: %s", getOffersFile())
-   savedOffers = offers.NewOffers()
-   savedOffers.LoadOffers(getOffersFile())
+    savedOffers = offers.NewOffers()
+    savedOffers.LoadOffers(getOffersFile())
+
+    t, _:= os.Stat(getOffersFile())
+    tmpData.OffersSize = strconv.FormatInt(t.Size(), 10)
+    tmpData.OffersTime = t.ModTime().Unix()
+    timeStamp, _ = json.Marshal(tmpData)
 }
 
 func currentOffers() offers.DiningMap {
    return savedOffers
 }
+
+func offersTimestamp() []byte {
+    return timeStamp
+}
+
 
 func reloadOffers(w *fsnotify.Watcher) {
    for {
@@ -45,17 +64,6 @@ func reloadOffers(w *fsnotify.Watcher) {
             log.Printf("Reloading %s saved offers", watchFile)
             saveOffers()
          }
-//         if (event.Op == fsnotify.Rename) {
-//            time.Sleep(50 * time.Microsecond)
-//            log.Printf("Reloading %s saved offers", watchFile)
-//            // reset watcher to look at the new file
-//            err := w.Add(watchFile)
-//            if err != nil {
-//                log.Printf("Add Error: %s", err)
-//            }
-//            saveOffers()
-//            log.Printf("Watching: %q", w.WatchList())
-//         }
       case err, ok := <-w.Errors:
          if !ok {
             return
@@ -79,7 +87,7 @@ func startWatcher(f string) {
    go reloadOffers(watcher)
 
    err = watcher.Add(filepath.Dir(f))
-   err = watcher.Add(f)
+//   err = watcher.Add(f)
    if err != nil {
       log.Fatal("Watcher Add: ", err)
    }

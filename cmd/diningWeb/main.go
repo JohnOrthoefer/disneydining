@@ -7,9 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -97,22 +95,6 @@ func getOffers(s string) ([]byte, error) {
 	return json.MarshalIndent(tmpData, "", " ")
 }
 
-func offersTimestamp(s string) ([]byte, error) {
-	var tmpData struct {
-		OffersSize string
-		OffersTime int64
-	}
-
-	t, err := os.Stat(s)
-	if err != nil {
-		return nil, err
-	}
-
-	tmpData.OffersSize = strconv.FormatInt(t.Size(), 10)
-	tmpData.OffersTime = t.ModTime().Unix()
-	return json.MarshalIndent(tmpData, "", " ")
-}
-
 func getSearches() ([]byte, error) {
     type KeyValue map[string]string
     type Section struct {
@@ -148,7 +130,7 @@ func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
 	case "offers.json":
 		j, err = getOffers(offersFile)
 	case "update":
-		j, err = offersTimestamp(offersFile)
+		j = offersTimestamp()
     case "search":
         j, err = getSearches()
 	default:
