@@ -3,7 +3,7 @@ package main
 import (
 	"disneydining/internal/offers"
 	"disneydining/internal/timeout"
-	"gopkg.in/ini.v1"
+	"disneydining/internal/config"
 	"log"
 	"time"
    "strings"
@@ -33,81 +33,42 @@ func fmtDiningInfo(di diningInfo) string {
 func main() {
    var diningRequests []diningInfo
 
-	// Read the config file
-	cfg, err := ini.LoadSources(ini.LoadOptions{
-	   IgnoreInlineComment:         true,
-	   UnescapeValueCommentSymbols: true,
-      }, "config.ini")
-	if err != nil {
-		log.Fatal("Failed to read config.ini file")
-	}
+   config.ReadConfig("config.ini")
 
 	// Enable/Disable Timestamps in log
-	if !cfg.Section("DEFAULT").Key("timestamps").MustBool(true) {
+	if !config.TimestampsEnabled() {
 		clearTimestamps()
 	}
 
    // Set the User Agent to your favorate browser
-   if cfg.Section("browser").HasKey("agent") {
-      ua := cfg.Section("browser").Key("agent").String()
-      log.Printf("User Agent: %s", ua)
-      offers.SetUserAgent(ua)
-   }
-      
+   offers.SetUserAgent(config.GetUserAgent())
 
 	// info
 	displayBuildInfo()
 
 	// Start a Timer to make sure we get done
-	timeout.StartTimer(cfg.Section("DEFAULT").Key("timeout").MustString("10m"))
-
-	// Read the dining file This will get moved to the config file
-	scheduleFile := cfg.Section("DEFAULT").Key("searchfile").MustString("./dining.ini")
-	dining, err := ini.Load(scheduleFile)
-	if err != nil {
-		log.Fatal("Failed to read %s file", scheduleFile)
-	}
-	log.Printf("Schedule: %s", scheduleFile)
+	timeout.StartTimer(config.GetRuntimeLimit())
 
 	// get params
-	disney := cfg.Section("disney")
-   if disney.HasKey("AuthURL") {
-      offers.SetAuthURL(disney.Key("AuthURL").String())
-   }
-   if disney.HasKey("AuthCookie") {
-      offers.SetAuthCookieName(disney.Key("AuthCookie").String())
-   }
-   offers.SetOffersURL(disney.Key("url").MustString(defaultQueryURL))
-
-
-	defSize := dining.Section("DEFAULT").Key("size").String()
-	defEnable := dining.Section("DEFAULT").Key("enabled").MustBool(true)
+   offers.SetAuthURL(config.GetAuthURL())
+   offers.SetAuthCookieName(config.GetAuthCookie())
+   offers.SetOffersURL(config.GetQueryURL())
 
 	allOffers := offers.NewOffers()
-	if cfg.Section("DEFAULT").HasKey("saveoffers") {
-		offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
-		allOffers.LoadOffers(offersName)
-		log.Printf("Loaded %d offers at %d locations from %s", allOffers.CountOffers(), len(allOffers), offersName)
+	if sf := config.OffersFilename(); sf != "" {
+		allOffers.LoadOffers(sf)
+		log.Printf("Loaded %d offers at %d locations from %s", allOffers.CountOffers(), len(allOffers), sf)
 	}
 
    offersChan := make(chan diningInfo, 10)
    offersCnt  := 0
 
-	for _, s := range dining.Sections() {
-		searchName := s.Name()
-      // default section is not a search section
-		if searchName == "DEFAULT" {
-			continue
-		}
-      // Section must be "enabled"
-		if !s.Key("enabled").MustBool(defEnable) {
-			continue
-		}
+	for _, s := range config.DiningQueries() {
+		searchName := s.SearchName()
 
-      // get this sections information
-		searchDate := s.Key("date").String()
-		searchTime := offers.NormalizeMeal(s.Key("time").MustString("Lunch"))
-		searchSize := s.Key("size").MustString(defSize)
+		searchDate := s.SearchDate()
+		searchTime := offers.NormalizeMeal(s.SearchTime())
+		searchSize := s.SearchSize()
 
       // if the date is in the past or too far in the future ignore
 		if !offers.CheckDate(searchDate) {
@@ -161,11 +122,9 @@ func main() {
 	}
 
 	timeout.StopTimer()
-	if cfg.Section("DEFAULT").HasKey("saveoffers") {
-		retention, _ := time.ParseDuration("30m")
+	if offersName := config.OffersFilename(); offersName != "" {
 		log.Printf("Purged %d old entries",
-			allOffers.PurgeOffers(cfg.Section("DEFAULT").Key("offerretention").MustDuration(retention)))
-		offersName := cfg.Section("DEFAULT").Key("saveoffers").String()
+			allOffers.PurgeOffers(config.RetentionTime()))
 		log.Printf("Saving %d offers at %d locations to %s", allOffers.CountOffers(), len(allOffers), offersName)
 		allOffers.SaveOffers(offersName)
 	}
