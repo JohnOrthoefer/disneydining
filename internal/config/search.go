@@ -3,6 +3,7 @@ package config
 import (
    "log"
    "gopkg.in/ini.v1"
+   "strings"
 )
 
 type SearchCursor struct {
@@ -24,6 +25,14 @@ func (s SearchCursor) SearchTime() string {
 
 func (s SearchCursor) SearchSize() string {
    return s.section.Key("size").String()
+}
+
+func (s SearchCursor) RestaurantList() []string {
+   return strings.Fields(s.section.Key("restaurants").String())
+}
+
+func (s SearchCursor) KeyString(k string) string {
+   return s.section.Key(k).String()
 }
 
 func DiningQueries() []SearchCursor {
@@ -53,6 +62,10 @@ func readSearchFile(sf string) {
    // Apply defaults
    defSize := cfg.Section("DEFAULT").Key("size").MustString("2")
    defTime := cfg.Section("DEFAULT").Key("time").MustString("Lunch")
+   defLocs := ""
+   if cfg.Section("DEFAULT").HasKey("restaurants") {
+      defLocs = cfg.Section("DEFAULT").Key("restaurants").String()
+   }
 
    for _, j := range cfg.Sections() {
       if j.Name() == "DEFAULT" {
@@ -63,6 +76,10 @@ func readSearchFile(sf string) {
       }
       if !j.HasKey("time") {
          j.NewKey("time", defTime)
+      }
+      if !j.HasKey("restaurants") &&
+         defLocs != "" {
+         j.NewKey("restaurants", defLocs)
       }
    }
 
