@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"gopkg.in/ini.v1"
+    "disneydining/internal/config"
 	"html/template"
 	"log"
 	"net/http"
@@ -33,8 +33,7 @@ var tmpls *template.Template
 var tmplIndex map[string]URLs
 var xlatLoc map[string]string
 var mealVal map[string]int
-var offersFile string = "/tmp/dining/offers.json"
-var scheduleFile string
+var offersFile string
 
 func checkError(e error) {
 	if e != nil {
@@ -95,33 +94,6 @@ func getOffers(s string) ([]byte, error) {
 	return json.MarshalIndent(tmpData, "", " ")
 }
 
-func getSearches() ([]byte, error) {
-    type KeyValue map[string]string
-    type Section struct {
-        Name string
-        Key     KeyValue
-    }
-    var tmpData struct {
-        Data []*Section `json:"data"`
-    }
-    
-
-    dining, _ := ini.Load(scheduleFile)
-    for _, section := range dining.Sections() {
-        sec := new(Section)
-        sec.Name = section.Name()
-        sec.Key = make(KeyValue)
-        for _, key := range section.Keys() {
-            kn := key.Name()
-            kv := key.String()
-            sec.Key[kn] = kv
-        }
-        tmpData.Data = append(tmpData.Data, sec)
-    }
-        
-	return json.MarshalIndent(tmpData, "", " ")
-}
-
 func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
 	var j []byte
 	var err error
@@ -131,8 +103,6 @@ func handleJSON(page string, w http.ResponseWriter, r *http.Request) {
 		j, err = getOffers(offersFile)
 	case "update":
 		j = offersTimestamp()
-    case "search":
-        j, err = getSearches()
 	default:
 		log.Printf("Could not find %s", page)
 		return
@@ -178,50 +148,34 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// Read the config file
-	cfg, err := ini.Load("config.ini")
-	if err != nil {
-		log.Fatal("Failed to read config.ini file")
-	}
-
-	iniDefaults := cfg.Section("DEFAULT")
+    config.ReadConfig("config.ini")
 
 	// Enable/Disable Timestamps
-	if !iniDefaults.Key("timestamps").MustBool(true) {
+	if !config.TimestampsEnabled() {
 		log.SetFlags(0)
 	}
 
 	// info
 	displayBuildInfo()
 
-	offersFile = iniDefaults.Key("saveoffers").MustString(offersFile)
-	scheduleFile = cfg.Section("DEFAULT").Key("searchfile").MustString("./dining.ini")
+	offersFile = config.OffersFilename()
+    if offersFile == "" {
+        log.Fatal("No offers file in configfile.")
+    }
 
-	webcfg := cfg.Section("webserver")
-	listen := webcfg.Key("listen").MustString(":8099")
-	loadTemplates(webcfg.Key("tmplfiles").MustString("templates/*.tmpl"))
+	listen := config.GetWebListen()
+	loadTemplates(config.GetWebTmpls())
 
-	tmplcfg := cfg.Section("templates")
 	tmplIndex = make(map[string]URLs)
-
-	for _, p := range tmplcfg.Keys() {
-		tp, err := cfg.GetSection(p.String())
-		if err != nil {
-			continue
+	for _, p := range config.GetWebTmplList() {
+		tmplIndex[p] = URLs{
+			TmplName: config.GetWebTmplFile(p),
+			Vars:     config.GetWebTmplVars(p),
 		}
-		tmplEnt := URLs{
-			TmplName: tp.Key("template").String(),
-			Vars:     make(map[string]string),
-		}
-		for _, t := range tp.Keys() {
-			tmplEnt.Vars[t.Name()] = t.String()
-		}
-		tmplIndex[p.Name()] = tmplEnt
+        log.Printf("%s: %q", p, tmplIndex[p])
 	}
 
-	xlatLoc = make(map[string]string)
-	for _, i := range cfg.Section("locations").Keys() {
-		xlatLoc[i.Name()] = i.String()
-	}
+	xlatLoc = config.GetWebLocationTranslate()
 
     startWatcher(offersFile)
 

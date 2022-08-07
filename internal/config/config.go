@@ -50,6 +50,33 @@ func OffersFilename() string {
    return ""
 }
 
+func GetWebListen() string {
+   return configFile.Section("webserver").Key("listen").MustString(":8099")
+}
+
+func GetWebTmpls() string {
+   return configFile.Section("webserver").Key("tmplfiles").MustString("templates/*.tmpl")
+}
+   
+func GetWebTmplList() []string {
+   return configFile.Section("templates").KeyStrings()
+}
+
+func GetWebTmplFile(tmpl string) string {
+   sec := configFile.Section("templates").Key(tmpl).String()
+   log.Printf("tmpl=%s", sec)
+   return configFile.Section(sec).Key("template").String()
+}
+
+func GetWebTmplVars(tmpl string) map[string]string {
+   sec := configFile.Section("template").Key(tmpl).String()
+   return configFile.Section(sec).KeysHash()
+}
+
+func GetWebLocationTranslate() map[string]string {
+   return configFile.Section("locations").KeysHash()
+}
+
 func ReadConfig(cf string) {
    // Read the config file
    cfg, err := ini.LoadSources(ini.LoadOptions{
