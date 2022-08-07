@@ -1,5 +1,5 @@
 SRC= main.go build.go startWatcher.go
-INTERNAL=../../internal/offers/offers.go
+INTERNAL=../../internal/config/*.go
 EXE=diningWeb
 GOLANG=/usr/local/go/bin/go
 #GOLANG=/usr/bin/go
