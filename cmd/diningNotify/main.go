@@ -4,8 +4,8 @@ import (
 	"disneydining/internal/offers"
 	"disneydining/internal/config"
 	"log"
-	"time"
    "strings"
+   "time"
 )
 
 func main() {
@@ -41,15 +41,22 @@ func main() {
 		}
 
       // make sure the date parses
-      thisDate, err := time.Parse("_2 Jan 2006 ", searchDate)
-      if err != nil {
-         log.Printf("%s: Could not parse %s.. Skipping\n", searchName, searchDate)
-         continue
-      }
+      thisDate := offers.NormalizeDate(searchDate)
+
       for _, r := range searchList {
          for _, sz := range searchSize {
             log.Printf("%s: %s@%s %s - %s", searchName, 
                fmtDate(thisDate), searchTime, sz, r)
+            matches := allOffers.Match(thisDate, searchTime, offers.ToInt(sz), r)
+            if (matches != nil) {
+               for _, m := range matches {
+                  for _, o := range m.Offers {
+                     log.Printf("Match %s (seats:%d@%s) - %s", 
+                        m.Location.Name, o.Seats, o.Service, 
+                        o.When.Format(time.RFC1123))
+                  }
+               }
+            }
          }
       }
    }

@@ -28,7 +28,11 @@ func (s SearchCursor) SearchSize() string {
 }
 
 func (s SearchCursor) RestaurantList() []string {
-   return strings.Fields(s.section.Key("restaurants").String())
+   var rtn []string
+   for _, i := range s.section.Key("restaurants").Strings(",") {
+      rtn = append(rtn, strings.TrimSpace(i))
+   }
+   return rtn
 }
 
 func (s SearchCursor) KeyString(k string) string {
