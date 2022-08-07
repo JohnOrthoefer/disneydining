@@ -77,11 +77,7 @@ func main() {
 		}
 
       // make sure the date parses
-      thisDate, err := time.Parse("_2 Jan 2006 ", searchDate)
-      if err != nil {
-         log.Printf("%s: Could not parse %s.. Skipping\n", searchName, searchDate)
-         continue
-      }
+      thisDate := offers.NormalizeDate(searchDate)
 
       for _, size := range strings.Fields(searchSize) {
          di := diningInfo{
