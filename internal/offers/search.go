@@ -44,13 +44,13 @@ func (ds DiningStruct) compareSeats(s int) bool {
 
 func (src DiningMap) Match(d time.Time, meal string, sz int, name string) DiningMap {
 
-   var tmpAvail AvailMap
    rtn := NewOffers()
    queryDate := d.Format("20060102")
    queryMeal := strings.ToLower(meal)
 
    for _, i := range src {
       if i.compareName(name) {
+         var tmpAvail AvailMap
          thisID := i.Location.ID
          for _, j := range i.Offers {
             if (queryDate == j.When.Format("20060102")) &&

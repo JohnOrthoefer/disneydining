@@ -35,6 +35,10 @@ func (s SearchCursor) RestaurantList() []string {
    return rtn
 }
 
+func (s SearchCursor) NotifyList() []string {
+   return strings.Fields(s.section.Key("notify").String())
+}
+
 func (s SearchCursor) KeyString(k string) string {
    return s.section.Key(k).String()
 }
@@ -70,6 +74,14 @@ func readSearchFile(sf string) {
    if cfg.Section("DEFAULT").HasKey("restaurants") {
       defLocs = cfg.Section("DEFAULT").Key("restaurants").String()
    }
+   defNotify := ""
+   if cfg.Section("DEFAULT").HasKey("notify") {
+      defNotify = cfg.Section("DEFAULT").Key("notify").String()
+   }
+   defPushover := ""
+   if cfg.Section("DEFAULT").HasKey("pushover") {
+      defPushover = cfg.Section("DEFAULT").Key("pushover").String()
+   }
 
    for _, j := range cfg.Sections() {
       if j.Name() == "DEFAULT" {
@@ -85,6 +97,15 @@ func readSearchFile(sf string) {
          defLocs != "" {
          j.NewKey("restaurants", defLocs)
       }
+      if !j.HasKey("notify") &&
+         defNotify != "" {
+         j.NewKey("notify", defNotify)
+      }
+      if !j.HasKey("pushover") &&
+         defNotify != "" {
+         j.NewKey("pushover", defPushover)
+      }
+
    }
 
    // store the file

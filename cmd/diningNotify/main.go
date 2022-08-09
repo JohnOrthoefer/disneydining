@@ -5,12 +5,9 @@ import (
 	"disneydining/internal/config"
 	"log"
    "strings"
-   "time"
 )
 
 func main() {
-   //var diningRequests []diningInfo
-
    config.ReadConfig("config.ini")
 
 	// Enable/Disable Timestamps in log
@@ -21,6 +18,7 @@ func main() {
 	// info
 	displayBuildInfo()
 
+   // load the current offers
 	allOffers := offers.NewOffers()
 	if sf := config.OffersFilename(); sf != "" {
 		allOffers.LoadOffers(sf)
@@ -45,21 +43,16 @@ func main() {
 
       for _, r := range searchList {
          for _, sz := range searchSize {
-            log.Printf("%s: %s@%s %s - %s", searchName, 
+            log.Printf("%s: Checking for %s@%s %s - %s", searchName, 
                fmtDate(thisDate), searchTime, sz, r)
             matches := allOffers.Match(thisDate, searchTime, offers.ToInt(sz), r)
             if (matches != nil) {
-               for _, m := range matches {
-                  for _, o := range m.Offers {
-                     log.Printf("Match %s (seats:%d@%s) - %s", 
-                        m.Location.Name, o.Seats, o.Service, 
-                        o.When.Format(time.RFC1123))
-                  }
-               }
+               doNotify(s.KeyString("pushover"), matches, config.SquelchFilename())
             }
          }
       }
    }
+
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

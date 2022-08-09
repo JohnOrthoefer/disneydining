@@ -43,6 +43,13 @@ func RetentionTime() time.Duration{
    return configFile.Section("DEFAULT").Key("offerretention").MustDuration(defRet)
 }
 
+func SquelchFilename() string {
+   if configFile.Section("DEFAULT").HasKey("squelchfile") {
+      return configFile.Section("DEFAULT").Key("squelchfile").String()
+   }
+   return ""
+}
+
 func OffersFilename() string {
    if configFile.Section("DEFAULT").HasKey("saveoffers") {
       return configFile.Section("DEFAULT").Key("saveoffers").String()

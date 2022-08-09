@@ -49,20 +49,11 @@ func (d DiningMap) LoadOffers(n string) {
    }
    checkErr(err)
 
-//   log.Printf("Seeking...")
-//   f.Seek(0, 0)
-
    switch path.Ext(n) {
    case ".gzip":
       r, err := gzip.NewReader(f)
       checkErr(err)
       j, _ := io.ReadAll(r)
-/*      if err != nil {
-         log.Printf("len(j) = %d", len(j))
-         log.Printf("in LoadOffers - %s\n", err)
-         d = NewOffers()
-      }
-*/
       r.Close()
       json.Unmarshal(j, &d)
    case ".zz":
