@@ -84,6 +84,28 @@ func GetWebLocationTranslate() map[string]string {
    return configFile.Section("locations").KeysHash()
 }
 
+func NotifyEnabled() bool {
+   if !configFile.HasSection("notify") {
+      return false
+   }
+   if !configFile.Section("notify").HasKey("enabled") {
+      return false
+   }
+   rtn, _ := configFile.Section("notify").Key("enabled").Bool()
+   return rtn
+}
+
+func NotifyProgram() string {
+   if !configFile.HasSection("notify") {
+      return ""
+   }
+   if !configFile.Section("notify").HasKey("program") {
+      return ""
+   }
+   rtn := configFile.Section("notify").Key("program").String()
+   return rtn
+}
+
 func ReadConfig(cf string) {
    // Read the config file
    cfg, err := ini.LoadSources(ini.LoadOptions{

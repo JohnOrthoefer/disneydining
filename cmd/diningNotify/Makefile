@@ -1,6 +1,7 @@
-SRC= build.go  const.go  log.go  main.go  util.go
+SRC= build.go  const.go  log.go  main.go  util.go notify.go pushover.go
 INTERNAL=../../internal/offers/*.go \
-	../../internal/config/*.go
+	../../internal/config/*.go \
+	../../internal/squelch/*.go
 EXE=diningNotify
 #GOLANG=/usr/local/go/bin/go
 GOLANG=/usr/bin/go
@@ -17,9 +18,9 @@ ${EXE}: ${SRC} ${INTERNAL}
 	echo ${REPONAME}
 	${GOLANG} build \
       -ldflags "-X main.sha1ver=${SHA1} -X main.buildTime=${NOW} -X main.repoName=${REPONAME}"
-	strip ${EXE}
+#	strip ${EXE}
 
-all: update diningUpdate 
+all: update diningNotify 
 
 update: update-go
 
