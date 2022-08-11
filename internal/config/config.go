@@ -43,6 +43,13 @@ func RetentionTime() time.Duration{
    return configFile.Section("DEFAULT").Key("offerretention").MustDuration(defRet)
 }
 
+func SquelchFilename() string {
+   if configFile.Section("DEFAULT").HasKey("squelchfile") {
+      return configFile.Section("DEFAULT").Key("squelchfile").String()
+   }
+   return ""
+}
+
 func OffersFilename() string {
    if configFile.Section("DEFAULT").HasKey("saveoffers") {
       return configFile.Section("DEFAULT").Key("saveoffers").String()
@@ -75,6 +82,28 @@ func GetWebTmplVars(tmpl string) map[string]string {
 
 func GetWebLocationTranslate() map[string]string {
    return configFile.Section("locations").KeysHash()
+}
+
+func NotifyEnabled() bool {
+   if !configFile.HasSection("notify") {
+      return false
+   }
+   if !configFile.Section("notify").HasKey("enabled") {
+      return false
+   }
+   rtn, _ := configFile.Section("notify").Key("enabled").Bool()
+   return rtn
+}
+
+func NotifyProgram() string {
+   if !configFile.HasSection("notify") {
+      return ""
+   }
+   if !configFile.Section("notify").HasKey("program") {
+      return ""
+   }
+   rtn := configFile.Section("notify").Key("program").String()
+   return rtn
 }
 
 func ReadConfig(cf string) {

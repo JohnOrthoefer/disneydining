@@ -1,33 +1,43 @@
 package squelch
 
 import (
-   "log"
    "encoding/json"
-   "io/ioutil"
+   "os"
+   "log"
+   "time"
 )
 
 type Squelch struct {
    Items []interface{}
+   Updated time.Time
 }
 
-func NewSquelch() *Squelch {
+func New() *Squelch {
    return new(Squelch)
+}
+
+
+func (s *Squelch)Len()int {
+   return len(s.Items)
 }
 
 func (s *Squelch)Add(item interface{}) {
    s.Items = append(s.Items, item)
+   s.Updated = time.Now()
+   log.Printf("Added new Item: %T (%q)", item, item)
 }
 
-func (s *Squelch)Mute(item interface{}) bool {
+func (s *Squelch)Mute(item interface{}, cmp func(interface{}, interface{})bool) bool {
    for _, i := range s.Items {
-      log.Printf("Compare %q %q", i, item)
-      if i == item { return true }
+      if cmp(i, item) { 
+         return true 
+      }
    }
    return false
 }
 
 func (s *Squelch)Load(name string) error{
-   j, err := ioutil.ReadFile(name)
+   j, err := os.ReadFile(name)
    if err != nil {
       return err
    }
@@ -37,6 +47,6 @@ func (s *Squelch)Load(name string) error{
 
 func (s *Squelch)Save(name string) {
    data, _ := json.MarshalIndent(s, "", " ")
-   ioutil.WriteFile(name, data, 0644)
+   os.WriteFile(name, data, 0644)
 }
 

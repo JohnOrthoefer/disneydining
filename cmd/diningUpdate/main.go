@@ -5,9 +5,11 @@ import (
 	"disneydining/internal/timeout"
 	"disneydining/internal/config"
 	"log"
+   "os"
 	"time"
    "strings"
    "fmt"
+   "syscall"
 )
 
 type diningInfo struct {
@@ -77,11 +79,7 @@ func main() {
 		}
 
       // make sure the date parses
-      thisDate, err := time.Parse("_2 Jan 2006 ", searchDate)
-      if err != nil {
-         log.Printf("%s: Could not parse %s.. Skipping\n", searchName, searchDate)
-         continue
-      }
+      thisDate := offers.NormalizeDate(searchDate)
 
       for _, size := range strings.Fields(searchSize) {
          di := diningInfo{
@@ -128,6 +126,23 @@ func main() {
 		log.Printf("Saving %d offers at %d locations to %s", allOffers.CountOffers(), len(allOffers), offersName)
 		allOffers.SaveOffers(offersName)
 	}
+
+   if config.NotifyEnabled() {
+      cmd := config.NotifyProgram()
+      pid, err := syscall.ForkExec(cmd, []string{cmd}, &syscall.ProcAttr{Files: []uintptr{0, 1, 2}})
+	   if err != nil {
+		   panic(err.Error())
+	   }
+	   proc, err := os.FindProcess(pid)
+	   if err != nil {
+		   panic(err.Error())
+	   }
+	   state, err := proc.Wait()
+	   if err != nil {
+		   panic(err.Error())
+	   }
+      log.Printf("%s: %s", cmd, state)
+   }
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

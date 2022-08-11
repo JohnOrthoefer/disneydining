@@ -1,8 +1,8 @@
-SRC=build.go log.go main.go const.go
+SRC= build.go  const.go  log.go  main.go  util.go notify.go pushover.go
 INTERNAL=../../internal/offers/*.go \
 	../../internal/config/*.go \
-	../../internal/timeout/*.go
-EXE=diningUpdate
+	../../internal/squelch/*.go
+EXE=diningNotify
 #GOLANG=/usr/local/go/bin/go
 GOLANG=/usr/bin/go
 CURL=/usr/bin/curl
@@ -14,13 +14,13 @@ NOW=$(shell date +%Y-%m-%d_%T)
 #export HTTPS_PROXY=${HTTP_PROXY}
 
 
-diningUpdate: ${SRC} ${INTERNAL}
+${EXE}: ${SRC} ${INTERNAL}
 	echo ${REPONAME}
 	${GOLANG} build \
       -ldflags "-X main.sha1ver=${SHA1} -X main.buildTime=${NOW} -X main.repoName=${REPONAME}"
-	strip diningUpdate
+#	strip ${EXE}
 
-all: update diningUpdate 
+all: update diningNotify 
 
 update: update-go
 
