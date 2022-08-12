@@ -6,6 +6,15 @@ import (
    "strings"
 )
 
+type MatchQuery struct {
+   Date time.Time
+   DateAfter time.Time
+   DateBefore time.Time
+   Meal string
+   Seats int
+   Name string
+}
+
 func (ds DiningStruct) compareName(name string) bool {
    thisName := strings.ToLower(ds.Location.Name)
    queryName := strings.ToLower(name)
@@ -41,21 +50,28 @@ func (ds DiningStruct) compareSeats(s int) bool {
    return false
 }
 
-
-func (src DiningMap) Match(d time.Time, meal string, sz int, name string) DiningMap {
+func (src DiningMap) Match(q MatchQuery) DiningMap {
 
    rtn := NewOffers()
-   queryDate := d.Format("20060102")
-   queryMeal := strings.ToLower(meal)
+   queryDate := q.Date.Format("20060102")
+   queryMeal := strings.ToLower(q.Meal)
 
    for _, i := range src {
-      if i.compareName(name) {
+      if i.compareName(q.Name) {
          var tmpAvail AvailMap
          thisID := i.Location.ID
          for _, j := range i.Offers {
+/*
+            log.Printf("When: %s, Before(%s)=%t, After(%s)=%t",
+               j.When.String(), 
+               q.DateBefore.String(), j.When.Before(q.DateBefore),
+               q.DateAfter.String(), j.When.After(q.DateAfter))
+*/
             if (queryDate == j.When.Format("20060102")) &&
                (queryMeal == strings.ToLower(j.Service)) &&
-               (sz == j.Seats) {
+               (j.When.Before(q.DateBefore)) &&
+               (j.When.After(q.DateAfter)) &&
+               (q.Seats == j.Seats) {
                // we have a match
                tmpAvail = append(tmpAvail, j)
             }

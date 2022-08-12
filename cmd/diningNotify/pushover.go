@@ -7,12 +7,13 @@ import (
 )
 
 func pushover(user, msg string, api apikey) {
-/*
-   log.Printf("Url: %s", api.Url)
-   log.Printf("Token: %s", api.Token)
-   log.Printf("User: %s", user)
-   log.Printf("Msg: %s", msg)
-*/
+   if api.Url == "test://" {
+      log.Printf("Url: %s", api.Url)
+      log.Printf("Token: %s", api.Token)
+      log.Printf("User: %s", user)
+      log.Printf("Msg: %s", msg)
+      return
+   }
 
    resp, err := http.PostForm(api.Url, url.Values{
       "token":   {api.Token},

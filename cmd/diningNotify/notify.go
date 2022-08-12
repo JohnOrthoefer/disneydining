@@ -82,7 +82,7 @@ func (s *Squelch)Save(name string) {
    os.WriteFile(name, data, 0644)
 }
 
-func doNotify(user string, ds offers.DiningMap, sqlFilename string) {
+func doNotify(transport, user string, ds offers.DiningMap, sqlFilename string) {
    sqLst := New()
    sqLst.Load(sqlFilename)
 
@@ -104,7 +104,7 @@ func doNotify(user string, ds offers.DiningMap, sqlFilename string) {
                m.Location.Name, o.Seats, o.Service,
                o.When.Format(time.RFC1123))
             log.Printf("%s", str)
-            pushover(user, str, apiStorage["pushover"])
+            pushover(user, str, apiStorage[transport])
          }
       }
    }

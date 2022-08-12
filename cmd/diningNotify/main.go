@@ -5,6 +5,7 @@ import (
 	"disneydining/internal/config"
 	"log"
    "strings"
+   "time"
 )
 
 func main() {
@@ -40,19 +41,30 @@ func main() {
 
       // make sure the date parses
       thisDate := offers.NormalizeDate(searchDate)
+      thisAfter := offers.DateAddTime(searchDate, s.SearchAfter()).Add(time.Minute * -1)
+      thisBefore := offers.DateAddTime(searchDate, s.SearchBefore()).Add(time.Minute * 1)
 
       for _, r := range searchList {
          for _, sz := range searchSize {
             log.Printf("%s: Checking for %s@%s %s - %s", searchName, 
                fmtDate(thisDate), searchTime, sz, r)
-            matches := allOffers.Match(thisDate, searchTime, offers.ToInt(sz), r)
+            
+            matches := allOffers.Match(
+               offers.MatchQuery {
+                  Date: thisDate, 
+                  DateAfter: thisAfter,
+                  DateBefore: thisBefore,
+                  Meal: searchTime, 
+                  Seats: offers.ToInt(sz), 
+                  Name: r,
+            })
             if (matches != nil) {
-               doNotify(s.KeyString("pushover"), matches, config.SquelchFilename())
+               doNotify(config.NotifyTransport(), s.UserToken(),
+                  matches, config.SquelchFilename())
             }
          }
       }
    }
-
 }
 
 // vim: noai:ts=3:sw=3:set expandtab:

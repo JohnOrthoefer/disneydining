@@ -26,6 +26,7 @@ update: update-go
 
 update-go:
 	${GOLANG} get gopkg.in/ini.v1
+	${GOLANG} get github.com/google/uuid
 
 pretty:
 	${GOLANG} fmt ${SRC}

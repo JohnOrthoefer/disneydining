@@ -88,22 +88,28 @@ func NotifyEnabled() bool {
    if !configFile.HasSection("notify") {
       return false
    }
-   if !configFile.Section("notify").HasKey("enabled") {
-      return false
-   }
-   rtn, _ := configFile.Section("notify").Key("enabled").Bool()
-   return rtn
+   return configFile.Section("notify").Key("enabled").MustBool(false)
 }
 
 func NotifyProgram() string {
    if !configFile.HasSection("notify") {
       return ""
    }
-   if !configFile.Section("notify").HasKey("program") {
+   return  configFile.Section("notify").Key("program").MustString("")
+}
+
+func NotifyTransport() string {
+   if !configFile.HasSection("notify") {
       return ""
    }
-   rtn := configFile.Section("notify").Key("program").String()
-   return rtn
+   return  configFile.Section("notify").Key("transport").MustString("passover")
+}
+
+func NotifyUserTok() string {
+   if !configFile.HasSection("notify") {
+      return ""
+   }
+   return  configFile.Section("notify").Key("user_token").MustString("")
 }
 
 func ReadConfig(cf string) {

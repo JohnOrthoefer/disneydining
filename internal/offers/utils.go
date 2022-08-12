@@ -55,12 +55,21 @@ func NormalizeMeal(s string) string {
 }
 
 func NormalizeDate(b string) time.Time {
-   w, err := time.ParseInLocation("_2 Jan 2006 ", b, disneyTZ)
+   w, err := time.ParseInLocation("_2 Jan 2006", b, disneyTZ)
    if err != nil {
-      log.Printf("Date Check error %s", err)
+      log.Printf("NormalizeDate error %s", err)
       return disneyToday()
    }
    return w
+}
+
+func DateAddTime(d, h string) time.Time {
+   rtn, err := time.ParseInLocation("_2 Jan 2006 15:04", d+" "+h, disneyTZ)
+   if err != nil {
+      log.Printf("DateAddTime error %s", err)
+      return disneyToday()
+   }
+   return rtn
 }
 
 // checks that a and b are the same date
