@@ -42,13 +42,16 @@ func main() {
 			continue
 		}
 
-      thisAfter := offers.DateAddTime(searchDate, s.SearchAfter()).Add(time.Minute * -1)
-      thisBefore := offers.DateAddTime(searchDate, s.SearchBefore()).Add(time.Minute * 1)
+      thisAfter := offers.DateAddTime(thisDate.Format("02 Jan 2006"), 
+         s.SearchAfter()).Add(time.Minute * -1)
+      thisBefore := offers.DateAddTime(thisDate.Format("02 Jan 2006"),
+         s.SearchBefore()).Add(time.Minute * 1)
 
       for _, r := range searchList {
          for _, sz := range searchSize {
-            log.Printf("%s: Checking for %s@%s %s - %s", searchName, 
-               fmtDate(thisDate), searchTime, sz, r)
+            log.Printf("%s: Checking for %s@%s %s - %s (%s-%s)", searchName, 
+               fmtDate(thisDate), searchTime, sz, r, 
+               thisAfter.Format("15:04"), thisBefore.Format("15:04"))
             
             matches := allOffers.Match(
                offers.MatchQuery {
