@@ -33,14 +33,15 @@ func main() {
 		searchSize := strings.Fields(s.SearchSize())
       searchList := s.RestaurantList()
 
+      // make sure the date parses
+      thisDate := offers.NormalizeDate(searchDate)
+
       // if the date is in the past or too far in the future ignore
-		if !offers.CheckDate(searchDate) {
+		if !offers.CheckDate(thisDate) {
 			log.Printf("%s Skipping", searchName)
 			continue
 		}
 
-      // make sure the date parses
-      thisDate := offers.NormalizeDate(searchDate)
       thisAfter := offers.DateAddTime(searchDate, s.SearchAfter()).Add(time.Minute * -1)
       thisBefore := offers.DateAddTime(searchDate, s.SearchBefore()).Add(time.Minute * 1)
 

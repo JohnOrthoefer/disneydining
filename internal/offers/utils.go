@@ -55,12 +55,22 @@ func NormalizeMeal(s string) string {
 }
 
 func NormalizeDate(b string) time.Time {
-   w, err := time.ParseInLocation("_2 Jan 2006", b, disneyTZ)
-   if err != nil {
-      log.Printf("NormalizeDate error %s", err)
-      return disneyToday()
+   var rtn time.Time
+
+   switch b := strings.TrimSpace(strings.ToLower(b)); b {
+   case "today":
+      rtn = disneyToday()
+   case "tomorrow":
+      rtn = disneyToday().Add(time.Hour * 24)
+   default:
+      w, err := time.ParseInLocation("_2 Jan 2006", b, disneyTZ)
+      if err != nil {
+         log.Printf("NormalizeDate error %s", err)
+         rtn = disneyToday()
+      }
+      rtn = w
    }
-   return w
+   return rtn
 }
 
 func DateAddTime(d, h string) time.Time {
@@ -84,13 +94,7 @@ func SameDate(a time.Time, b string) bool {
 }
 
 // Check that string is after today
-func CheckDate(when string) bool {
-	w, err := time.ParseInLocation("_2 Jan 2006", when, disneyTZ)
-	if err != nil {
-		log.Printf("Date Check error %s", err)
-		return false
-	}
-
+func CheckDate(w time.Time) bool {
 	return w.After(disneyToday().AddDate(0, 0, -1)) && 
       w.Before(disneyToday().AddDate(0,0,adrDays))
 }

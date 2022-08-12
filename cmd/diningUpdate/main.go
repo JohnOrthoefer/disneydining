@@ -72,14 +72,14 @@ func main() {
 		searchTime := offers.NormalizeMeal(s.SearchTime())
 		searchSize := s.SearchSize()
 
+      // make sure the date parses
+      thisDate := offers.NormalizeDate(searchDate)
+
       // if the date is in the past or too far in the future ignore
-		if !offers.CheckDate(searchDate) {
+		if !offers.CheckDate(thisDate) {
 			log.Printf("%s Skipping", searchName)
 			continue
 		}
-
-      // make sure the date parses
-      thisDate := offers.NormalizeDate(searchDate)
 
       for _, size := range strings.Fields(searchSize) {
          di := diningInfo{
