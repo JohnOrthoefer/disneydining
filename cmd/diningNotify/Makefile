@@ -1,7 +1,6 @@
 SRC= build.go  const.go  log.go  main.go  util.go notify.go pushover.go
 INTERNAL=../../internal/offers/*.go \
-	../../internal/config/*.go \
-	../../internal/squelch/*.go
+	../../internal/config/*.go
 EXE=diningNotify
 #GOLANG=/usr/local/go/bin/go
 GOLANG=/usr/bin/go
