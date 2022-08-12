@@ -2,7 +2,6 @@ package offers
 
 import (
    "time"
-//   "log"
    "strings"
 )
 
@@ -61,12 +60,6 @@ func (src DiningMap) Match(q MatchQuery) DiningMap {
          var tmpAvail AvailMap
          thisID := i.Location.ID
          for _, j := range i.Offers {
-/*
-            log.Printf("When: %s, Before(%s)=%t, After(%s)=%t",
-               j.When.String(), 
-               q.DateBefore.String(), j.When.Before(q.DateBefore),
-               q.DateAfter.String(), j.When.After(q.DateAfter))
-*/
             if (queryDate == j.When.Format("20060102")) &&
                (queryMeal == strings.ToLower(j.Service)) &&
                (j.When.Before(q.DateBefore)) &&

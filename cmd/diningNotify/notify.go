@@ -4,6 +4,7 @@ import (
    "encoding/json"
    "os"
 	"disneydining/internal/offers"
+   "github.com/google/uuid"
    "log"
    "fmt"
    "time"
@@ -14,6 +15,7 @@ type MatchItem struct {
    Seats int
    When time.Time
    Updated time.Time
+   UUID uuid.UUID
 }
 
 type Squelch struct {
@@ -31,8 +33,16 @@ func New() *Squelch {
 }
 
 func (s *Squelch)Add(item MatchItem) {
-   s.Items = append(s.Items, item)
+   // update the touch time
    s.Updated = time.Now()
+
+   if s.Mute(item) {
+      // item is already in list
+      return
+   }
+
+   item.UUID = uuid.New()
+   s.Items = append(s.Items, item)
 }
 
 func (s *Squelch)Mute(item MatchItem)bool {
@@ -105,6 +115,10 @@ func doNotify(transport, user string, ds offers.DiningMap, sqlFilename string) {
                o.When.Format(time.RFC1123))
             log.Printf("%s", str)
             pushover(user, str, apiStorage[transport])
+         } else {
+            log.Printf("!!Squelched!! %s (seats:%d@%s) - %s",
+               m.Location.Name, o.Seats, o.Service,
+               o.When.Format(time.RFC1123))
          }
       }
    }
