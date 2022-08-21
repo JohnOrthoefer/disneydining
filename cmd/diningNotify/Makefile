@@ -9,14 +9,13 @@ GIT=/usr/bin/git
 REPONAME=$(shell basename `git rev-parse --show-toplevel`)
 SHA1=$(shell git rev-parse --short HEAD)
 NOW=$(shell date +%Y-%m-%d_%T)
-#export HTTP_PROXY=http://llproxy.llan.ll.mit.edu:8080
-#export HTTPS_PROXY=${HTTP_PROXY}
-
+GOVERSION=$(shell go version | cut -f3 -d\ )
+GOARCH=$(shell go version | cut -f4 -d\ )
 
 ${EXE}: ${SRC} ${INTERNAL}
 	echo ${REPONAME}
 	${GOLANG} build \
-      -ldflags "-X main.sha1ver=${SHA1} -X main.buildTime=${NOW} -X main.repoName=${REPONAME}"
+      -ldflags "-X main.sha1ver=${SHA1} -X main.buildTime=${NOW} -X main.repoName=${REPONAME} -X main.goVersion=${GOVERSION} -X main.goArch=${GOARCH}"
 #	strip ${EXE}
 
 all: update diningNotify 
