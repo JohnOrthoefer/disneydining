@@ -1,7 +1,7 @@
 package offers
 
 import (
-   "io/ioutil"
+   "os"
    "testing"
    "time"
 )
@@ -14,7 +14,7 @@ func TestToday(t *testing.T) {
 
 func TestJSON(t *testing.T) {
    testOffers := "data/15Aug2022.json"
-   content, err := ioutil.ReadFile(testOffers)
+   content, err := os.ReadFile(testOffers)
    if err != nil {
       t.Errorf("%s", err)
    }

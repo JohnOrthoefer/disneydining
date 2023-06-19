@@ -1,7 +1,7 @@
 package offers
 
 import (
-   "io/ioutil"
+   "io"
    "log"
    "net/http"
    "net/url"
@@ -81,7 +81,7 @@ func FetchOffers(d time.Time, t string, sz int) []byte {
    }
 
    defer resp.Body.Close()
-   body, err := ioutil.ReadAll(resp.Body)
+   body, err := io.ReadAll(resp.Body)
    if err != nil {
       log.Fatalln(err)
    }
