@@ -57,12 +57,15 @@ func NormalizeMeal(s string) string {
 
 func NormalizeDate(b string) time.Time {
 	cmd := strings.Fields(strings.ToLower(b))
-	log.Printf("Debug: cmd = %q", cmd)
+	//log.Printf("Debug: cmd = %q", cmd)
+
 	switch cmd[0] {
 	case "today":
 		return disneyToday()
 	case "tomorrow":
 		return disneyToday().Add(time.Hour * 24)
+	case "last":
+		return disneyToday().Add(time.Hour * time.Duration(24*adrDays))
 	case "fromtoday":
 		if len(cmd) > 1 {
 			n, err := strconv.Atoi(cmd[1])
@@ -75,9 +78,8 @@ func NormalizeDate(b string) time.Time {
 			case n > 60:
 				n = 60
 			}
-
 			rtn := disneyToday().Add(time.Hour * time.Duration(24*n))
-			log.Printf("FromToday = %s", rtn.String())
+			//log.Printf("Debug: FromToday = %s", rtn.String())
 			return rtn
 		}
 	default:
