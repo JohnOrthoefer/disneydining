@@ -5,7 +5,8 @@ import (
    "time"
    "bytes"
    "net/http"
-   "io/ioutil"
+   "io"
+   "os"
    "net/url"
    "strings"
 )
@@ -89,8 +90,13 @@ func FetchEntities(d time.Time) []byte {
 
    defer resp.Body.Close()
 
-   body, err := ioutil.ReadAll(resp.Body)
+   body, err := io.ReadAll(resp.Body)
    checkErr(err)
+
+   if false {
+      // Saves Entities File as retrived
+      os.WriteFile("saveEnt.json", body, 0644)
+   }
 
    return body
 }
